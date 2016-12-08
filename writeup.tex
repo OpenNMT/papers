@@ -66,9 +66,13 @@
 \end{itemize}
 
 
-Motivation of building a new system.
+\paragraph{Motivation}
 
-Prioritized factor 
+why build a new system.
+
+Some proprietary (google, etc.), others too research-y
+
+Prioritized factors
 
 \begin{itemize}
 \item Training efficiency
@@ -84,8 +88,9 @@ Prioritized factor
 \item One column describing the technical details
 \end{itemize}
 
-
 \section{Implementation}
+
+Details: torch. text-to-text mapping. toolkit for extensibility
 
 \subsection{Modularity}
 
@@ -96,27 +101,39 @@ Prioritized factor
 
 \subsection{Optimizations}
 
+Encoder/Decoder optimization
+
 \begin{itemize}
-\item Shared memory
-\item C-Decoder 
+\item Shared memory (cite opt net)
+\item C-Decoder  
 \end{itemize}
 
 \subsection{Advanced Features}
+
+Other papers . 
 
 \section{User Studies}
 
 \paragraph{Feature-Based Inputs}
 
-\paragraph{Knowledge Distillation}
+Discuss using modularity to add features as input and output
+
+\paragraph{Knowledge Distillation/Pruning}
+
+Discuss model access to allow for pruning and distillation. 
 
 \paragraph{Im2Latex}
 
+Discuss ability to modify encoder representation to allow for other tasks. 
+
 \section{Experimental Results}
+
+Mainly focus on NMT. Speed, memory, accuracy. 
 
 \begin{table}
   \centering
   
-  \caption{Performance Results}
+  \caption{Performance Results. Several languages}
 \end{table}
 
 
@@ -126,7 +143,9 @@ Prioritized factor
   \caption{Speed Results. Multi-GPU, distillation, c decoder}
 \end{table}
 
+Picture of demo application running 
 
+\section{Conclusion}
 
 
 \bibliography{writeup}
