@@ -43,29 +43,88 @@
 \maketitle
 \begin{abstract}
 
+  We describe an open-source toolkit for neural machine translation
+  that supports research development of sequence-to-sequence models.
+  The system is prioritizes simplicity, modularity, and efficiency to
+  make it reasonable for researchers to experiment with variants of
+  neural machine translation that explore different feature
+  representations, model architectures, and source (multi)-modalities,
+  while maintaining competitive performance and tractable training
+  requirements. The toolkit consists of modeling and decoding support,
+  as well as detailed pedagogical documentation about the underlying
+  methodologies.
 
 \end{abstract}
 
 \section{Introduction}
 
 
+\begin{itemize}
+\item Description of current state of NMT
+\item Difference with other NMT
+\item Description of open-source nmt systems. Several research systems, but there is a not a ... 
+\end{itemize}
+
+
+Motivation of building a new system.
+
+Prioritized factor 
+
+\begin{itemize}
+\item Training efficiency
+\item System Modularity
+\item Support for alternative representations
+\item Industrial decoding.
+\end{itemize}
+
+
 \section{Background: Neural Machine Translation}
 
+\begin{itemize}
+\item One column describing the technical details
+\end{itemize}
 
-\section{Related Work}
 
 \section{Implementation}
 
 \subsection{Modularity}
 
+\begin{itemize}
+\item Separate encoder/decoder 
+\item Arbitrary input/output representations (features, images)
+\end{itemize}
+
 \subsection{Optimizations}
+
+\begin{itemize}
+\item Shared memory
+\item C-Decoder 
+\end{itemize}
 
 \subsection{Advanced Features}
 
-\section{Experiments}
-
 \section{User Studies}
 
+\paragraph{Feature-Based Inputs}
+
+\paragraph{Knowledge Distillation}
+
+\paragraph{Im2Latex}
+
+\section{Experimental Results}
+
+\begin{table}
+  \centering
+  
+  \caption{Performance Results}
+\end{table}
+
+
+\begin{table}
+  \centering
+  
+  \caption{Speed Results. Multi-GPU, distillation, c decoder}
+\end{table}
 
 
 
