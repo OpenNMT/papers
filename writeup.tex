@@ -21,6 +21,7 @@
 \usepackage{times}
 \usepackage{url}
 \usepackage{latexsym}
+\usepackage{graphicx}
 
 \eaclfinalcopy % Uncomment this line for the final submission
 %\def\eaclpaperid{***} %  Enter the acl Paper ID here
@@ -35,7 +36,7 @@
 
 \title{OpenNMT: Open-Source Toolkit for Neural Machine Translation}
 
-\author{Yoon Kim, Guillaume Klein, Jean Senellart, Alexander M. Rush ... }
+\author{Yoon Kim$^*$, Guillaume Klein$^\dagger$, Yuntian Deng$^*$, Jean Senellart$^\dagger$, Alexander M. Rush$^*$ \\ Harvard University$^*$, Systran $^\dagger$d}
 
 \date{}
 
@@ -45,7 +46,7 @@
 
   We describe an open-source toolkit for neural machine translation
   that supports research development of sequence-to-sequence models.
-  The system is prioritizes simplicity, modularity, and efficiency to
+  The toolkit prioritizes simplicity, modularity, and efficiency to
   make it reasonable for researchers to experiment with variants of
   neural machine translation that explore different feature
   representations, model architectures, and source (multi)-modalities,
@@ -59,30 +60,61 @@
 \section{Introduction}
 
 
-\begin{itemize}
-\item Description of current state of NMT
-\item Difference with other NMT
-\item Description of open-source nmt systems. Several research systems, but there is a not a ... 
-\end{itemize}
+Neural machine translation (NMT) is a new methodology for machine
+translation \cite{}, that has shown remarkable gains particularly in
+terms of human evaluation. Originally popularized by the work of
+\cite{} and expanded upon by \cite{}. Over the last year the systems
+have been further refined and developed by work such as \cite{}.
+
+In this work we describe a new open-source toolkit for developing
+neural machine translation systems, known as \textit{OpenNMT}. The
+system is motivated by frameworks, such as Moses and CDec developed
+for statistical machine translation (SMT). These toolkits aim to
+provide a shared frameworks for developing and comparing open-source
+SMT systems that are complete and flexible enough for research
+development, while at the same time being efficient and accurate
+enough to be used production contexts. 
 
 
-\paragraph{Motivation}
+Currently there are several existing NMT systems. Including Google NMT
+\cite{}, ... Several of these systems are proprietary. Several others
+are mainly research system such as seq2seq-attn. Perhaps most similar
+to OpenNMT is the NeMaTus system \cite{}, based on the system of \cite{}
+which aims to provide the same type of feature set as OpenNMT, using a
+different underlying neural network toolkit.
 
-why build a new system.
+In developing OpenNMT we prioritized three different factors, which
+are described in this technical report: (1) Our top priority was
+training and decoding speed. NMT systems are notoriously slow to
+train, often requiring weeks of training time on the latest GPU
+hardware and significant test resources. We targeted this issue by
+implementing multi-GPU training, using aggressive memory sharing, and
+developing a specialized CPU decoder. (2) Our second priority was system
+modularity and teachibility. We intend OpenNMT as a living research
+system, and so the codebase was developed to provide a
+self-documenting overview of NMT. We discuss how this approach allowed
+us to add factored models \cite{} to the system. (3) Finally NMT is a very 
+quick moving research area, and we would like the system to support 
+new research areas as they develop. To demonstrate this approach we 
+abstracted out the core of OpenNMT as a library, and describe the case 
+study of using OpenNMT for image-to-text translation. 
 
-Some proprietary (google, etc.), others too research-y
-
-Prioritized factors
-
-\begin{itemize}
-\item Training efficiency
-\item System Modularity
-\item Support for alternative representations
-\item Industrial decoding.
-\end{itemize}
+This report describes the background for NMT, the main aspects of system development, and the preliminary results from using the system in practice.  
 
 
 \section{Background: Neural Machine Translation}
+
+Neural machine translation has now been extensively described in many
+excellent papers and tutorials \cite{}, which we briefly summarize. 
+The arch
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{simple-attn}
+  \caption{Schematic view of neural machine translation. The \textcolor{red}{red} source words are first mapped to word vectors and then fed into a recurrent neural network (RNN). Upon seeing the $\langle$eos$\rangle$ symbol, the final time step initializes a target \textcolor{blue}{blue} RNN. At each target time step, \textit{attention} is applied over the source RNN and combined with the current hidden state to produce a prediction $p(w_t| w_{1, \ldots, t-1}, x)$ of the next word. This prediction is then fed back into the target RNN.}
+\end{figure}
+
 
 \begin{itemize}
 \item One column describing the technical details
