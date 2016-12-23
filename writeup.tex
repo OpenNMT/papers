@@ -22,6 +22,8 @@
 \usepackage{url}
 \usepackage{latexsym}
 \usepackage{graphicx}
+\usepackage{color}
+\usepackage{booktabs}
 
 \eaclfinalcopy % Uncomment this line for the final submission
 %\def\eaclpaperid{***} %  Enter the acl Paper ID here
@@ -45,15 +47,15 @@
 \begin{abstract}
 
   We describe an open-source toolkit for neural machine translation
-  that supports research development of sequence-to-sequence models.
-  The toolkit prioritizes simplicity, modularity, and efficiency to
-  make it reasonable for researchers to experiment with variants of
-  neural machine translation that explore different feature
-  representations, model architectures, and source (multi)-modalities,
-  while maintaining competitive performance and tractable training
-  requirements. The toolkit consists of modeling and decoding support,
-  as well as detailed pedagogical documentation about the underlying
-  methodologies.
+  that supports research development of attention-based
+  encoder-decoder models.  The toolkit prioritizes efficiency,
+  modularity, and extensibility to make it reasonable for researchers to
+  experiment with variants of neural machine translation that explore
+  different feature representations, model architectures, and source
+  modalities, while maintaining competitive performance and
+  tractable training requirements. The toolkit consists of modeling
+  and decoding support, as well as detailed pedagogical documentation
+  about the underlying methodologies.
 
 \end{abstract}
 
@@ -61,72 +63,148 @@
 
 
 Neural machine translation (NMT) is a new methodology for machine
-translation \cite{}, that has shown remarkable gains particularly in
-terms of human evaluation. Originally popularized by the work of
-\cite{} and expanded upon by \cite{}. Over the last year the systems
-have been further refined and developed by work such as \cite{}.
+translation that has led to remarkable improvements particularly in
+terms of human judgment of translation quality compared to rule-based
+and statistical machine translation systems
+\cite{wu2016google,systran}. Originally developed using pure
+sequence-to-sequence models \cite{sutskever14sequence,Cho2014} and
+improved upon using attention-based variants \cite{Bahdanau2015,
+  Luong2015}, it has now become a standard methodology for machine
+translation, as well as an effective approach for other related NLP
+tasks such as dialogue, parsing, and summarization.
 
-In this work we describe a new open-source toolkit for developing
-neural machine translation systems, known as \textit{OpenNMT}. The
-system is motivated by frameworks, such as Moses and CDec developed
-for statistical machine translation (SMT). These toolkits aim to
+As neural machine translation becomes standardized, it becomes more
+important for the machine translation and NLP community to develop
+standard reference implementations for researchers to benchmark
+against, learn from, and extend upon. Just as the SMT community
+benefited greatly from toolkits like Moses \cite{koehn2007moses} for phrase-based MT
+and the CDec toolkit \cite{dyer2010cdec} for syntax-based MT, standard NMT
+toolkits can provide the foundation to compare results and develop a
+more robust open-source community. A toolkit should aim to
 provide a shared frameworks for developing and comparing open-source
 SMT systems that are complete and flexible enough for research
 development, while at the same time being efficient and accurate
 enough to be used production contexts. 
 
 
-Currently there are several existing NMT systems. Including Google NMT
-\cite{}, ... Several of these systems are proprietary. Several others
-are mainly research system such as seq2seq-attn. Perhaps most similar
-to OpenNMT is the NeMaTus system \cite{}, based on the system of \cite{}
-which aims to provide the same type of feature set as OpenNMT, using a
-different underlying neural network toolkit.
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{simple-attn}
+  \label{fig:rnn}
+  \caption{\small Schematic view of neural machine translation. The \textcolor{red}{red} source words are first mapped to word vectors and then fed into a recurrent neural network (RNN). Upon seeing the $\langle$eos$\rangle$ symbol, the final time step initializes a target \textcolor{blue}{blue} RNN. At each target time step, \textit{attention} is applied over the source RNN and combined with the current hidden state to produce a prediction $p(w_t| w_{1: t-1}, x)$ of the next word. This prediction is then fed back into the target RNN.}
+\end{figure}
 
-In developing OpenNMT we prioritized three different factors, which
-are described in this technical report: (1) Our top priority was
-training and decoding speed. NMT systems are notoriously slow to
-train, often requiring weeks of training time on the latest GPU
-hardware and significant test resources. We targeted this issue by
-implementing multi-GPU training, using aggressive memory sharing, and
-developing a specialized CPU decoder. (2) Our second priority was system
-modularity and teachibility. We intend OpenNMT as a living research
-system, and so the codebase was developed to provide a
-self-documenting overview of NMT. We discuss how this approach allowed
-us to add factored models \cite{} to the system. (3) Finally NMT is a very 
-quick moving research area, and we would like the system to support 
-new research areas as they develop. To demonstrate this approach we 
-abstracted out the core of OpenNMT as a library, and describe the case 
-study of using OpenNMT for image-to-text translation. 
+% In this work we describe a new open-source toolkit for developing
+% neural machine translation systems, known as \textit{OpenNMT}. The
+% system is motivated by frameworks, such as Moses and CDec developed
+% for statistical machine translation (SMT). These toolkits aim to
+% provide a shared frameworks for developing and comparing open-source
+% SMT systems that are complete and flexible enough for research
+% development, while at the same time being efficient and accurate
+% enough to be used production contexts. 
 
-This report describes the background for NMT, the main aspects of system development, and the preliminary results from using the system in practice.  
+Currently there are many different existing NMT implementations. Many
+systems such as those developed in industry by Google
+\cite{wu2016google}, Microsoft, and Baidu, are closed source, and are
+unlikely to be released with unrestricted licenses. Many other systems
+such as GroundHog, Blocks, tensorflow-seq2seq, and our own
+seq2seq-attn, exist mostly as research code. These libraries provide
+partial functionality and minimal support. All provide some subset of
+efficiency, completeness, high accuracy, modularity, and clear
+documentation. Perhaps most promising is the Edinburgh NeMaTus system
+originally based on NYU's system. NeMaTus provides high-accuracy
+translation, many options, clear documentation, and has been used in
+several successful research projects. We hope to complement this type
+of system to provide a useful open-source NMT framework for the
+NLP community in academia and industry.
+
+With this goal in mind, we introduce \textit{OpenNMT} (\url{http://opennmt.net}), an open-source framework
+for neural machine translation. OpenNMT is a complete NMT
+implementation. In addition to providing code for the core translation
+tasks, OpenNMT was designed with three criteria:
+
+\begin{enumerate}
+\item prioritize first training and test efficiency
+\item maintain model modularity and readability
+\item support significant research extensibility  
+\end{enumerate}
+
+This technical report describes the how the first-release of the
+system targets these criteria. We begin by briefly surveying the
+background for NMT, describing the high-level implementation details,
+and then describing specific case studies for the three criteria.  We
+end by showing preliminary benchmarks of the system in terms of
+accuracy, speed, and memory usage for several translation and
+translation-like tasks.
+
+% the main aspects of system development, and the preliminary results from using the system in practice.  
+
+% (a) Our top priority was training and decoding speed. NMT systems are
+% notoriously slow to train, often requiring weeks of training time on
+% the latest GPU hardware and significant test resources. We targeted
+% this issue by implementing multi-GPU training, using aggressive memory
+% sharing, and developing a specialized CPU decoder. 
+
+% (b) Our second
+% priority was system modularity and teachibility. We intend OpenNMT as
+% a living research system, and so the codebase was developed to provide
+% a self-documenting overview of NMT. We discuss how this approach
+% allowed us to add factored models \cite{} to the system. 
+
+% (c) Finally
+% NMT is a very quick moving research area, and we would like the system
+% to support new research areas as they develop. To demonstrate this
+% approach we abstracted out the core of OpenNMT as a library, and
+% describe the case study of using OpenNMT for image-to-text
+% translation.
+
+
 
 
 \section{Background}
 
 Neural machine translation has now been extensively described in many
-excellent papers and tutorials \cite{}, which we briefly summarize.
-NMT systems take a conditional language modeling view of translation
-(as opposed to the noisy channel view of SMT systems). This means they
-model the probability of a target sentence $w_{1:T}$ given a source
-sentence $x$ as
+excellent papers and tutorials (see for instance
+\url{https://sites.google.com/site/acl16nmt/home}). We therefore give
+only a condensed overview here. 
+
+NMT takes a conditional language modeling view of translation (as
+opposed to the noisy channel view of SMT). Formally NMT models the
+probability of a target sentence $w_{1:T}$ given a source sentence
+$x_{1:S}$ as
 $p(w_{1:T}| x) = \prod_{1}^T p(w_t| w_{1:t-1}, x; \theta)$. This
-distribution is modeled using an attention-based encoder-decoder
-architecture \cite{}. In particular a source encoder recurrent neural network
-(RNN) maps each source word to a word vector, and processes these to a
-sequence of hidden vectors $\mathbf{h}_1, \ldots, \mathbf{h}_S$. To produce the language model probability a target decoder RNN, combines a representation of previously generated words ($w_1, ... w_{t-1}$) with these source hidden vectors and a softmax layer to produce $ p(w_t| w_{1:t-1}, x; \theta)$. The source hidden vectors are utilized through an attention layer, a type of pooling that weights each source word relative to its expected contribution to the target prediction.
-The complete model is trained end-to-end to minimize the negative log-likelihood of the training corpus. 
+distribution is estimated using an attention-based encoder-decoder
+architecture \cite{Bahdanau2015}. A source encoder recurrent neural
+network (RNN) maps each source word to a word vector, and processes
+these to a sequence of hidden vectors
+$\mathbf{h}_1, \ldots, \mathbf{h}_S$.  The target decoder combines an
+RNN hidden representation of previously generated words
+($w_1, ... w_{t-1}$) with source hidden vectors to predict scores for
+each possible next word. A softmax layer is then used to produce a
+distribution $ p(w_t| w_{1:t-1}, x; \theta)$. Crucially the source
+hidden vectors are processed through an attention pooling layer that
+weights each source word relative to its expected contribution to the
+target prediction. The complete model is trained end-to-end to
+minimize the negative log-likelihood of the training corpus. An
+unfolded network diagram is shown in
+Figure~\ref{fig:rnn}.
 
 
-In practice, there are also several important details that contribute to model effectiveness. (a) It is important to use a gated RNN such as an LSTM \cite{} or GRU \cite{} which help the model learn long-term features. (b) Translation requires relatively large, stacked RNNs, which consist of several layers (2-16) of RNN at each time step \cite{}. (c) Input feeding, where the previous attention vector is fed back into the input as well as the predicted word, has been shown to be quite helpful for machine translation \cite{}. OpenNMT provides command-line support for each of these options.
+In practice, there are also several other important details that
+contribute to model effectiveness: (a) It is important to use a gated
+RNN such as an LSTM \cite{hochreiter1997long} or GRU
+\cite{chung2014empirical} which help the model learn long-term
+features. (b) Translation requires relatively large, stacked RNNs,
+which consist of several layers (2-16) of RNN at each time step
+\cite{sutskever14sequence}. (c) Input feeding, where the previous
+attention vector is fed back into the input as well as the predicted
+word, has been shown to be quite helpful for machine translation
+\cite{Luong2015}.  (d) Test-time decoding is done through \textit{beam
+  search} where multiple hypothesis target predictions are considered
+at each time step. 
 
 
 
-\begin{figure}
-  \centering
-  \includegraphics[width=\linewidth]{simple-attn}
-  \caption{Schematic view of neural machine translation. The \textcolor{red}{red} source words are first mapped to word vectors and then fed into a recurrent neural network (RNN). Upon seeing the $\langle$eos$\rangle$ symbol, the final time step initializes a target \textcolor{blue}{blue} RNN. At each target time step, \textit{attention} is applied over the source RNN and combined with the current hidden state to produce a prediction $p(w_t| w_{1: t-1}, x)$ of the next word. This prediction is then fed back into the target RNN.}
-\end{figure}
 
 
 % \begin{itemize}
@@ -135,81 +213,97 @@ In practice, there are also several important details that contribute to model e
 
 \section{Implementation}
 
-
 OpenNMT is a complete system and library for learning, training, and
-deploying neural machine translation models. The system is successor to
-the \textit{seq2seq-attn} system developed at Harvard, using roughly
-the same external interface, but with a complete rewrite of the
-internals to ease readability and generalizability. 
+deploying neural machine translation models. The system is successor
+to the \textit{seq2seq-attn} system developed at Harvard, using
+roughly the same external interface, but with a complete rewrite of
+the internals to ease readability and generalizability. It includes
+vanilla NMT models along with support for attention, gating, stacking,
+input feeding, regularization, beam search and all other options necessary
+for state-of-the-art performance.  
 
 The system is implemented using the Torch mathematical framework and
 neural network library, and can be easily be extended using Torch's
-internal standard neural network components. Originally, external RNN
-components libraries were used, but the current version uses its own
-RNN implementation for fine-grained control of memory allocation. The
-training aspects of the library are highly tuned for single or
-multi-GPU usage. The test component can be run either on CPU or GPU, and uses batched beam search to speed up the translation process.
+internal standard neural network components. The current version uses
+its own RNN implementation for fine-grained control of memory
+allocation. 
 
-The system has been developed fully as an open-source project on GitHub at \url{http://github.com/opennmt/opennmt} with most contributions coming from Systran and, across the ocean,  the Harvard NLP group. Since official beta release, the project has been starred by over 500 users, and there have been active development by those outside of these two organtizations. 
+The system has been developed completely in the open on GitHub at
+(\url{http://github.com/opennmt/opennmt}) and is MIT licensed.  The
+first version has primarily (intercontinental) contributions from
+Systran Paris and the Harvard NLP group. Since official beta release,
+the project has been starred by over 500 users, and there have been
+active development by those outside of these two organizations. The
+project has an active forum for community feedback.
 
-One nice aspect of the implementation is its relative compactness. The complete OpenNMT system including preprocessing is roughly 4K lines of code. For comparison the Moses SMT framework including language modeling is over 100K lines.   
+
+One nice aspect of NMT as a model is its relative compactness. The
+complete OpenNMT system including preprocessing is roughly 4K lines of
+code. For comparison the Moses SMT framework including language
+modeling is over 100K lines. This makes the system easy to completely
+understand for newcomers and contributors.
 
 
 
 \section{Design Goals}
 
-As there are now many descriptions and details of low-level RNN and beam search implementations, we skip many of these details and instead focus on the main design desiderata that motivated OpenNMT: efficiency, modularity, and extensibility. 
-We point interested readers to the code for implementation notes.  
 
-\subsection{Efficiency Optimizations}
+As the the low-level details of NMT have been covered in previous
+works, we focus this tech report on the top-down design goals of
+OpenNMT. We focused particularly on three ordered criteria:
+system efficiency, code modularity, and model extensibility. 
+Here we present case studies of progress on each goal.
+
+\subsection{System Efficiency}
 
 As NMT systems can take from days to weeks to train, training
-efficiency is a paramount research concern. Slightly faster training
-can make be the difference between plausible and impossible experiments. 
+efficiency is a paramount research concern, and the top priority of
+OpenNMT. Slightly faster training can make be the difference between
+plausible and impossible experiments.
 
-\paragraph{Memory Sharing}
+\paragraph{Optimization: Memory Sharing}
 
-With some exception standard consumer GPUs are currently limited to 12
-GB of memory. When training NMT models, the memory size limits the
-plausible batch size of the system, and thus directly impacts training
-time of the system. Neural network toolkits, such as Torch, are often
-designed to trade-off extra memory allocations for speed and
-declarative simplicity. For OpenNMT, we wanted to have it both ways,
-and so we implemented an external memory sharing system that exploits
-the known time-series control flow of NMT systems and aggressively
-shares the internal buffers. This makes the system slightly less
-flexible than toolkits such as Element-RNN \cite{}, but provides a
-saving of almost 70\% of GPU memory. This in turn allows for much
-larger batch sizes.
+With few exceptions, GPUs are currently limited to 12 GB of
+memory. When training NMT models, the memory size limits the plausible
+batch size of the system, and thus directly impacts training time of
+the system. Neural network toolkits, such as Torch, are often designed
+to trade-off extra memory allocations for speed and declarative
+simplicity. For OpenNMT, we wanted to have it both ways, and so we
+implemented an external memory sharing system that exploits the known
+time-series control flow of NMT systems and aggressively shares the
+internal buffers. This makes the system slightly less flexible than
+toolkits such as Element-RNN \cite{DBLP:journals/corr/LeonardWW15ss},
+but provides a saving of almost 70\% of GPU memory. This in turn
+allows for much larger batch sizes.
 
 
-\paragraph{Multi-GPU} OpenNMT additionally supports basic multi-GPU
+\paragraph{Optimization: Multi-GPU} OpenNMT additionally supports basic multi-GPU
 training. The implementation is relatively straightforward, each GPU
-runs its own instance of the model. We run async SGD
+runs its own instance of the model. We run async SGD...
 
 
-\paragraph{C/Mobile/GPU Decoders} During training NMT systems require
-signficant code complexity and storage to implement backpropagation
-through time and parameter updates. At test time the system is much
-less complex, and only requires forwarding values through the network
-and running a beam search that is much simplified compared to SMT. To
-exploit this, OpenNMT includes several different decoders optimized
-for different environments: a batched GPU decoder for very quickly
-translating a large set of sentences, a simple single-instance decoder
-for use on mobile devices, and a specialized C decoder. The last
-decoder is particularly useful for industial use as it can run on CPU
-in standard production environments. The decoder reads the structure
-of the network from Lua and then uses the Eigen package to implement
-the basic linear algebra necessary for decoding.
+\paragraph{Case Study: C/Mobile/GPU Decoders} During training, NMT
+systems require signficant code complexity and storage to facilitate
+back-propagation-through-time and parameter updates. At test time the
+system is much less complex, and only requires (i) forwarding values
+through the network and (ii) running a beam search that is much
+simplified compared to SMT. To exploit this asymetry, OpenNMT includes
+several different decoders specialized for different run-time
+environments: a batched GPU decoder for very quickly translating a
+large set of sentences, a simple single-instance decoder for use on
+mobile devices, and a specialized C decoder. The last decoder is
+particularly nice to have for industial use as it can run on CPU in standard
+production environments. The decoder reads the structure of the
+network from Lua and then uses the Eigen package to implement the
+basic linear algebra necessary for decoding. Decoders are all 
+available at the OpenNMT GitHub (\url{http://github.com/opennmt}).
 
 
+\subsection{Modularity for Research}
 
-
-\subsection{Structural Modularity}
-
-While training efficiency was a primary concern, this goal was
-balanced with the desire to keep the code readable and modifiable by
-an advance undergraduate.  We targeted this goal by explicitly
+While training efficiency was a primary concern, the secondary goal
+was a desire for code readability at the 
+advanced undergraduate-level.  We targeted this goal by explicitly
 separating out the above optimizations from the core model, and by 
 documenting each module with mathematical diagrams describing how 
 it connects to the underlying neural network descriptions. To test whether 
@@ -218,39 +312,37 @@ two case studies.
 
 \paragraph{Case Study: Factored Neural Translation}
 
-In factored neural translation models \cite{}, instead of simply
-generating a word at each time step, the model generates a word and
-its features. For instance, the model might have a separate case
-feature, in which case it would model the probability of the
-lower-cased word form and the case marker. This extension requires
-modifying both the output of the decoder to generate multiple symbols,
-and also the input to the decoder to take in a word and its features.
+In feature-based or factored neural translation models
+\cite{sennrich2016linguistic}, instead of simply generating a word at
+each time step, the model generates both word and its features. For
+instance, the model might have a separate case feature, in which case
+it would model the probability of the lower-cased word form and the
+case marker. This extension requires modifying both the output of the
+decoder to generate multiple symbols, and also the input to the
+decoder to take in a word and its features. In OpenNMT both of these
+aspects are abstracted from the core translation code, and therefore
+we were able to add factored translation by modifying the input
+network to instead process the feature-based representation, and the
+output generator network to instead produce multiple conditionally
+independent predictions.  This option can be turned on by modifying
+the training data to include the factored words.
 
-In OpenNMT both of these aspects are abstracted from the core
-translation code, and therefore we were able to add factored
-translation by modifying the input network to instead process the
-feature-based representation, and the output generator network to
-instead produce multiple conditionally independent predictions.  This
-option can be turned on by modifying the training data to include the
-factored words.
-
-
-\paragraph{Case Study: Variant Attention}
+\paragraph{Case Study: Attention Networks}
 
 The use of attention over the encoder at each step of translation is
 crucial for the model to perform well. The default method is to
 utilize the gloabl attention mechanism proposed by \cite{}. However
 there are many other times of attention that have recently proposed
-including local attention \cite{}, sparse max attention \cite{},
-heirarichical attention \cite{} among others. As this is simply a
-module in OpenNMT it can easily be substituted. 
-
-Recently the Harvard NLP group developed a new method known as
-structured attention \cite{}, that utilizes graphical model inference
-to compute this attention. The method was quite involved and required
-custom CUDA code to compute efficiently. However the method is
-modularized to fit the Torch NN interface and can therefore be
-directly used in OpenNMT to substitute for standard attention.
+including local attention \cite{Luong2015}, sparse-max attention
+\cite{martins2016softmax}, Hierarchical attention
+\cite{yang2016hierarchical} among others. As this is simply a module
+in OpenNMT it can easily be substituted. Recently the Harvard NLP
+group developed a new method known as structured attention,
+that utilizes graphical model inference to compute this attention. The
+method was quite involved and required custom CUDA code to compute
+efficiently. However the method is modularized to fit the Torch NN
+interface and can therefore be directly used in OpenNMT to substitute
+for standard attention.
 
 
 \subsection{Extensibility}
@@ -258,34 +350,77 @@ directly used in OpenNMT to substitute for standard attention.
 The last goal of OpenNMT is to realize the deep learning is a very
 quick moving area and that likely within the next couple years there
 will be many unexpected applications of these style of
-methods. Already we see related, but very different work in
-variational seq2seq auto-encoders \cite{}, one-shot learning \cite{},
-and neural turing machines \cite{}. 
+methods. Already we see related, but very different styles of work,
+e.g.  in variational seq2seq variation auto-encoders
+\cite{DBLP:conf/conll/BowmanVVDJB16}, one-shot learning
+\cite{DBLP:conf/nips/VinyalsBLKW16}, or memory network \cite{DBLP:journals/corr/WestonCB14} based models.
 
 
-\paragraph{Image-to-Text}
+\paragraph{Case Study: Image-to-Text}
 
-As a final case study, we experimented with implementing a complete
-image-to-text translation system using the OpenNMT
+As an extensibilty case study of the library, we experimented with
+implementing a complete attention-based image-to-text translation
+system \cite{DBLP:journals/corr/XuBKCCSZB15} using the OpenNMT
 library. Qualitatively this is a very different problem than standard
-machine translation as the source sentence has a different modality.
-However, it seems like the future of translation may require this
-style of multi-modal inputs \cite{}. In particular, we adapted the
-im2markup system developed by \cite{} to instead use this library.
-Instead using word embeddings, this model requires a deep convolution
-over the source input. However as this part of the network is
-pluggable, it could be naturally defined in Torch. In fact, excepting
-preprocessing, the entire adaptation requires only 500 lines of code and 
-is open sourced as \url{github.com/opennmt/im2text} 
-
+machine translation as the source sentence is an image.  However, the
+future of translation may require this style of (multi-)modal inputs
+(e.g. \url{http://www.statmt.org/wmt16/multimodal-task.html}). In
+particular, we adapted the im2markup system
+\cite{DBLP:journals/corr/DengKR16} to instead use OpenNMT as a
+library.  Instead of using word embeddings, this model requires a deep
+convolution over the source input. However as this part of the network
+is pluggable, it could be naturally defined in Torch. In fact,
+excepting preprocessing, the entire adaptation requires only 500 lines
+of code and is open sourced as \url{github.com/opennmt/im2text}
 
 \section{Benchmarks}
 
-Mainly focus on NMT. Speed, memory, accuracy. 
+
+In this section we document preliminary runs of the model. We expect
+performance and memory usage to improve with further development.
+
+These benchmarks are run using a machine Intel(R) Core(TM) i7-6800K CPU @
+3.40GHz, 256GB Mem, trained on 1 GPU TITAN X (Pascal version) with
+CUDA v. 8.0.  Run on English-to-German (EN$\rightarrow$DE) and
+German-to-English (DE$\rightarrow$EN) using the WMT 2015\footnote{http://statmt.org/wmt15}
+dataset. These benchmarks are run using the default parameters of
+OpenNMT which is a two-layer encoder-decoder LSTM model with 500
+hidden units per layer. For comparison we also run the NeMaTus (\url{https://github.com/rsennrich/nematus}) system on 
+the same data.
+
+
+Results are show in Table~\ref{tab:res}. The ...
+
+
+Additionally we also trained OpenNMT on several non-standard
+translation tasks. First is a summarization model \cite{} ...
+
+Finally we trained a very language multilingual translation 
+model following \newcite{viegas2016google}. This model is a 5x5 translation 
+model translating across romance language. It translates from and to 
+Frenc, Spanish, Portuguese, Italian, and Romanian ( FR,ES,PT,IT,RO$\leftrightarrow$ FR,ES,PT,IT,RO  )
+
+
+
+
+
+
+
+
 
 \begin{table}
   \centering
-  
+  \begin{tabular}{cccc}
+    \toprule
+     Language & Sent/Sec & Memory & BLEU \\
+    \midrule
+    DE$\rightarrow$EN& 216.7 & 2.5 GB & 17.02\\
+    EN$\rightarrow$DE& 211.3 & 2.6 GB & 20.67 \\
+    \midrule
+
+    \bottomrule
+  \end{tabular}
+  \label{tab:res}
   \caption{Performance Results. Several languages}
 \end{table}
 
