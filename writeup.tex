@@ -241,7 +241,9 @@ One nice aspect of NMT as a model is its relative compactness. The
 complete OpenNMT system including preprocessing is roughly 4K lines of
 code. For comparison the Moses SMT framework including language
 modeling is over 100K lines. This makes the system easy to completely
-understand for newcomers and contributors.
+understand for newcomers and contributors. The project is fully autonomous
+including also a simple language independent reversible tokenization and
+detokenization tools.
 
 
 
@@ -271,16 +273,24 @@ to trade-off extra memory allocations for speed and declarative
 simplicity. For OpenNMT, we wanted to have it both ways, and so we
 implemented an external memory sharing system that exploits the known
 time-series control flow of NMT systems and aggressively shares the
-internal buffers. This makes the system slightly less flexible than
+internal buffers between clones. The possible sharing is dynamically calculated
+by exploration of the network graph before starting the training. 
+This makes the system slightly less flexible than
 toolkits such as Element-RNN \cite{DBLP:journals/corr/LeonardWW15ss},
 but provides a saving of almost 70\% of GPU memory. This in turn
 allows for much larger batch sizes.
 
-
-\paragraph{Optimization: Multi-GPU} OpenNMT additionally supports basic multi-GPU
-training. The implementation is relatively straightforward, each GPU
-runs its own instance of the model. We run async SGD...
-
+\paragraph{Optimization: Multi-GPU} OpenNMT additionally supports multi-GPU
+training using data parallelism. The implementation is relatively straightforward, each GPU
+ has a replica of the master parameters and process independent batches during training phase.
+Two modes are available: synchronous and asynchronous training
+\begin{itemize}
+\item in synchronous training, batches on parallel GPU are run simultaneously and gradients 
+aggregated to update master parameters before synchronization on each GPU for the following batch
+\item in asynchronous training, batches are run independent on each GPU, and independent gradients accumulated 
+to the master copy of the parameters. Asynchronous SGD is known to provide better convergence.
+\end{itemize}
+The parallel implementation uses low level optimized primitive for multi-GPU communication\footnote{see NCCL - https://github.com/NVIDIA/nccl}.
 
 \paragraph{Case Study: C/Mobile/GPU Decoders} During training, NMT
 systems require signficant code complexity and storage to facilitate
@@ -308,7 +318,7 @@ separating out the above optimizations from the core model, and by
 documenting each module with mathematical diagrams describing how 
 it connects to the underlying neural network descriptions. To test whether 
 this approach would allow novel feature development we experimented with 
-two case studies. 
+two case studies.
 
 \paragraph{Case Study: Factored Neural Translation}
 
@@ -344,6 +354,15 @@ efficiently. However the method is modularized to fit the Torch NN
 interface and can therefore be directly used in OpenNMT to substitute
 for standard attention.
 
+
+Finally, we wanted the project not to depend on third party tools like commonly used Moses tokenizer (in perl) and BPE implementation (in python). Moses tokenizer integrates language specific tokenization heuristic that are not necessary for RNN-based approach. So we introduced a simple tokenization schema - called "reversible tokenization" with following characteristics:
+\begin{itemize}
+\item the tokenization includes markers allowing the detokenization so that all language knowledge is part of the model
+\item the tokenization rules are extremely simple and come in 2 modes. In aggressive mode, transition between letter and number or separtor, between two separators, or between a number and a separator is corresponding to a tokenization mark. In conservative mode, numbers, letters, and symbols {\tt[\-\verb!-\_!]} are grouped together, and the same for numbers and number separator symbol {\tt[.,]}.
+\end{itemize}
+Also tokenizer also perform BPE splitting \cite{BPE}.
+
+Example of tokenized sentences are given in table ref{tab:token}.
 
 \subsection{Extensibility}
 
@@ -395,10 +414,10 @@ Results are show in Table~\ref{tab:res}. The ...
 Additionally we also trained OpenNMT on several non-standard
 translation tasks. First is a summarization model \cite{} ...
 
-Finally we trained a very language multilingual translation 
-model following \newcite{viegas2016google}. This model is a 5x5 translation 
+Finally we trained a multilingual translation model following \newcite{viegas2016google}. This model is a 5x5 translation 
 model translating across romance language. It translates from and to 
-Frenc, Spanish, Portuguese, Italian, and Romanian ( FR,ES,PT,IT,RO$\leftrightarrow$ FR,ES,PT,IT,RO  )
+French, Spanish, Portuguese, Italian, and Romanian (FR,ES,PT,IT,RO$\leftrightarrow$FR,ES,PT,IT,RO). Training data is 4M sentences and was selected from the open parallel corpus\footnote{http://opus.lingfil.uu.se} and specifically from Europarl, GlobalVoices and Ted. Corpus was selected to be multi-source, multi-target: each sentence has its translation in the 4 other languages. The motivation of this selection was to evaluate the inter-language learning and not the additional sentences from each language available in other language pairs. Corpus was tokenized using shared Byte Pair Encoding of 32k.
+Results are presented in \ref{tab:esfritptro} and we can see that each language pair quality receives a huge gain in the multi-way training. This is a clear evidence of the contribution from each language pair to the interlingua representation between all these very close languages.
 
 
 
@@ -430,6 +449,32 @@ Frenc, Spanish, Portuguese, Italian, and Romanian ( FR,ES,PT,IT,RO$\leftrightarr
   
   \caption{Speed Results. Multi-GPU, distillation, c decoder}
 \end{table}
+
+\begin{table*}
+  \small \centering
+  \begin{tabular}{lccccc}
+    \toprule
+          & ES & FR & IT & PT & RO \\
+    \midrule
+ES	& - & 32.71 (+5.43)	 & 28 (+4.64) & 34.41 (+6.08) & 28.73 (+6.45) \\ FR	& 32.87 (+3.3)	& -  & 26.32 (+4.25)	 & 30.89 (+5.16) & 25.95 (+6.64) \\IT     & 31.64 (+5.34)	 & 31.03 (+5.81) & - & 27.96 (+4.98) & 24.27 (+5.9) \\PT	& 35.32 (+10.38) & 34.08 (+4.68) & 28.09 (+5.55) & - & \\RO	&				\\
+    \bottomrule
+  \end{tabular}
+  \label{tab:esfritptro}
+  \caption{Performance Results for the twenty language pairs with the unique translation model. In parenthesis, score improvement compared to individual models trained with only the language pair data.}
+\end{table*}
+
+\begin{table*}
+  \small \centering
+  \begin{tabular}{lccccc}
+    \toprule
+    \midrule
+
+    \bottomrule
+  \end{tabular}
+  \label{tab:token}
+  \caption{Example of reversible tokenization}
+\end{table*}
+
 
 Picture of demo application running 
 
