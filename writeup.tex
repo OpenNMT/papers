@@ -38,7 +38,7 @@
 
 \title{OpenNMT: Open-Source Toolkit for Neural Machine Translation}
 
-\author{Guillaume Klein$^\dagger$, Yoon Kim$^*$, Yuntian Deng$^*$, Jean Senellart$^\dagger$, Alexander M. Rush$^*$ \\ Harvard University$^*$, Systran $^\dagger$}
+\author{Guillaume Klein$^\dagger$, Yoon Kim$^*$, Yuntian Deng$^*$, Jean Senellart$^\dagger$, Alexander M. Rush$^*$ \\ Harvard University$^*$, SYSTRAN $^\dagger$}
 
 \date{}
 
@@ -214,7 +214,7 @@ internal standard neural network components.
 The system has been developed completely in the open on GitHub at
 (\url{http://github.com/opennmt/opennmt}) and is MIT licensed.  The
 first version has primarily (intercontinental) contributions from
-Systran Paris and the Harvard NLP group. Since official beta release,
+SYSTRAN Paris and the Harvard NLP group. Since official beta release,
 the project has been starred by over 500 users, and there have been
 active development by those outside of these two organizations. The
 project has an active forum for community feedback.
@@ -225,8 +225,8 @@ complete OpenNMT system including preprocessing is roughly 4K lines of
 code. For comparison the Moses SMT framework including language
 modeling is over 100K lines. This makes the system easy to completely
 understand for newcomers and contributors. The project is fully self-contained
-including also a simple language independent reversible tokenization and
-detokenization tools.
+depending on minimal number of external lua libraries and including also a simple
+ language independent reversible tokenization and detokenization tools.
 
 
 
@@ -253,33 +253,32 @@ trade-off extra memory allocations for speed and declarative
 simplicity. For OpenNMT, we wanted to have it both ways, and so we
 implemented an external memory sharing system that exploits the known
 time-series control flow of NMT systems and aggressively shares the
-internal buffers between clones. The possible sharing is dynamically
+internal buffers between clones. The potential shared buffers is dynamically
 calculated by exploration of the network graph before starting the
 training.  This makes the system slightly less flexible than toolkits
 such as Element-RNN \cite{DBLP:journals/corr/LeonardWW15ss}, but
 provides a saving of 70\% of GPU memory on the default model. 
 
 \paragraph{Optimization: Multi-GPU} OpenNMT additionally supports multi-GPU
-training using data parallelism. The implementation is relatively straightforward, each GPU
- has a replica of the master parameters and process independent batches during training phase.
+training using data parallelism. Each GPU has a replica of the master parameters
+ and process independent batches during training phase.
 Two modes are available: synchronous and asynchronous training.
 (1) In synchronous training, batches on parallel GPU are run simultaneously and gradients 
-aggregated to update master parameters before synchronization on each GPU for the following batch.
+aggregated to update master parameters before resynchronization on each GPU for the following batch.
 (2) In asynchronous training, batches are run independent on each GPU, and independent gradients accumulated 
-to the master copy of the parameters. Asynchronous SGD is known to provide better convergence.
-The parallel implementation uses low level optimized primitive for multi-GPU communication\footnote{see NCCL - https://github.com/NVIDIA/nccl}.
+to the master copy of the parameters. Asynchronous SGD is known to provide better convergence \cite{xxxx}.
 
 \paragraph{Case Study: C/Mobile/GPU Decoders} Training NMT
 systems requires significant code complexity to facilitate fast
-back-propagation-through-time. At test time the
+back-propagation-through-time. At test time, the
 system is much less complex, and only requires (i) forwarding values
 through the network and (ii) running a beam search that is much
-simplified compared to SMT. To exploit this asymetry, OpenNMT includes
+simplified compared to SMT. To exploit this asymmetry, OpenNMT includes
 several different decoders specialized for different run-time
 environments: a batched CPU/GPU decoder for very quickly translating a
 large set of sentences, a simple single-instance decoder for use on
 mobile devices, and a specialized C decoder. The last decoder is
-particularly suited for industial use as it can run on CPU in standard
+particularly suited for industrial use as it can run on CPU in standard
 production environments. The decoder reads the structure of the
 network from Lua and then uses the Eigen package to implement the
 basic linear algebra necessary for decoding. 
@@ -314,7 +313,7 @@ the training data to include the factored words.
 
 The use of attention over the encoder at each step of translation is
 crucial for the model to perform well. The default method is to
-utilize the gloabl attention mechanism. However
+utilize the global attention mechanism. However
 there are many other times of attention that have recently proposed
 including local attention \cite{Luong2015}, sparse-max attention
 \cite{martins2016softmax}, hierarchical attention
@@ -371,7 +370,7 @@ library.  This model replaces the source RNN with a deep convolution
 over the source input. However as this part of the network is
 pluggable, it could be naturally defined in Torch. In fact, excepting
 preprocessing, the entire adaptation requires only 500 lines of code
-and is also open-sourced as \url{http://github.com/opennmt/im2text}
+and is also open-sourced as \url{http://github.com/opennmt/im2text}.
 
 \section{Benchmarks}
 
@@ -382,24 +381,19 @@ performance and memory usage to improve with further development.
 These benchmarks are run using a machine Intel(R) Core(TM) i7-6800K CPU @
 3.40GHz, 256GB Mem, trained on 1 GPU TITAN X (Pascal version) with
 CUDA v. 8.0.  Run on English-to-German (EN$\rightarrow$DE) and
-German-to-English (DE$\rightarrow$EN) using the WMT 2015\footnote{http://statmt.org/wmt15}
+German-to-English (DE$\rightarrow$EN) using the WMT 2015\footnote{\url{http://statmt.org/wmt15}}
 dataset. These benchmarks are run using the default parameters of
 OpenNMT which is a two-layer encoder-decoder LSTM model with 500
-hidden units per layer. For comparison we also run the Nematus (\url{https://github.com/rsennrich/nematus}) system on 
-the same data.
-
-
-Results are show in Table~\ref{tab:res}. The ...
+hidden units per layer. For comparison we also run the Nematus \footnote{\url{https://github.com/rsennrich/nematus}} system on 
+the same data and a larger model (800 hidden units, word embedding of 600 dimension and 4 layers). Results are show in Table~\ref{tab:res}. 
 
 
 Additionally we also trained OpenNMT on several non-standard
 translation tasks. First is a summarization model \cite{} ...
 
-Finally we trained a multilingual translation model following \newcite{viegas2016google}. This model is a 5x5 translation 
-model translating across romance language. It translates from and to 
-French, Spanish, Portuguese, Italian, and Romanian (FR,ES,PT,IT,RO$\leftrightarrow$FR,ES,PT,IT,RO). Training data is 4M sentences and was selected from the open parallel corpus\footnote{http://opus.lingfil.uu.se} and specifically from Europarl, GlobalVoices and Ted. Corpus was selected to be multi-source, multi-target: each sentence has its translation in the 4 other languages. The motivation of this selection was to evaluate the inter-language learning and not the additional sentences from each language available in other language pairs. Corpus was tokenized using shared Byte Pair Encoding of 32k.
-Results are presented in \ref{tab:esfritptro} and we can see that each language pair quality receives a huge gain in the multi-way training. This is a clear evidence of the contribution from each language pair to the interlingua representation between all these very close languages.
-
+Finally we trained a multilingual translation model following \newcite{viegas2016google}. The model translates from and to 
+French, Spanish, Portuguese, Italian, and Romanian (FR,ES,PT,IT,RO$\leftrightarrow$FR,ES,PT,IT,RO). Training data is 4M sentences and was selected from the open parallel corpus\footnote{\url{http://opus.lingfil.uu.se}} and specifically from Europarl, GlobalVoices and Ted. Corpus was selected to be multi-source, multi-target: each sentence has its translation in the 4 other languages. The motivation of this selection was to evaluate the model cross-language learning. Corpus was tokenized using shared Byte Pair Encoding of 32k.
+Comparative results between multiway translation and each of the 20 independent training are presented in Table~\ref{tab:esfritptro}.
 
 
 
@@ -409,26 +403,19 @@ Results are presented in \ref{tab:esfritptro} and we can see that each language 
 
 
 \begin{table}
+ \small
   \centering
   \begin{tabular}{cccc}
     \toprule
-     Language & Sent/Sec & Memory & BLEU \\
+     Language & Sent/Sec & BLEU \\
     \midrule
-    DE$\rightarrow$EN& 216.7 & 2.5 GB & 17.02\\
-    EN$\rightarrow$DE& 211.3 & 2.6 GB & 20.67 \\
+    DE$\rightarrow$EN& 220/xxx/xxx & 20.6/xx.x/xx.x\\
     \midrule
-
+    EN$\rightarrow$DE& 220/xxx/xxx & 17.6/xx.x/xx.x - 20.9\\
     \bottomrule
   \end{tabular}
   \label{tab:res}
-  \caption{Performance Results. Several languages}
-\end{table}
-
-
-\begin{table}
-  \centering
-  
-  \caption{Speed Results. Multi-GPU, distillation, c decoder}
+  \caption{Performance Results for EN$\leftrightarrow$DE training on WMT15 corpus. We compare {\it A}/{\it B}/{\it C} - {\it D} where {\it A} is 2x500x500 baseline training by OpenNMT, {\it B} is equivalent training with Nematus, {\it C} 4x800x600 training, and {\it D} is score obtained in \cite{Luong2015}}
 \end{table}
 
 \begin{table*}
@@ -437,30 +424,21 @@ Results are presented in \ref{tab:esfritptro} and we can see that each language 
     \toprule
           & ES & FR & IT & PT & RO \\
     \midrule
-ES	& - & 32.71 (+5.43)	 & 28 (+4.64) & 34.41 (+6.08) & 28.73 (+6.45) \\ FR	& 32.87 (+3.3)	& -  & 26.32 (+4.25)	 & 30.89 (+5.16) & 25.95 (+6.64) \\IT     & 31.64 (+5.34)	 & 31.03 (+5.81) & - & 27.96 (+4.98) & 24.27 (+5.9) \\PT	& 35.32 (+10.38) & 34.08 (+4.68) & 28.09 (+5.55) & - & \\RO	&				\\
+ES	& - & 32.71 (+5.43)	 & 28 (+4.64) & 34.41 (+6.08) & 28.73 (+6.45) \\ 
+FR	& 32.87 (+3.3)	& -  & 26.32 (+4.25)	 & 30.89 (+5.16) & 25.95 (+6.64) \\
+IT     & 31.64 (+5.34)	 & 31.03 (+5.81) & - & 27.96 (+4.98) & 24.27 (+5.9) \\
+PT	& 35.32 (+10.38) & 34.08 (+4.68) & 28.09 (+5.55) & - & 28.73 (+5.03)\\
+RO	& 35.00 (+5.37) & 31.94 (+9.07) & 26.38 (+6.34) & 31.63 (+7.29) & -\\
     \bottomrule
   \end{tabular}
   \label{tab:esfritptro}
-  \caption{Performance Results for the twenty language pairs with the unique translation model. In parenthesis, score improvement compared to individual models trained with only the language pair data.}
+  \caption{Performance Results for the twenty language pairs with the unique translation model. In parenthesis, score improvement compared to individual models trained with only the language pair data. The systematic huge improvement shows that each language pairs benefits from the learning of other language pairs which is remarkable since the corpus is completely parallel for the 5 languages which means that for a given language pair, no additional source or target sentence is presented to the system in another language pair.}
 \end{table*}
 
-\begin{table*}
-  \small \centering
-  \begin{tabular}{lccccc}
-    \toprule
-    \midrule
+% Picture of demo application running 
 
-    \bottomrule
-  \end{tabular}
-  \label{tab:token}
-  \caption{Example of reversible tokenization}
-\end{table*}
-
-
-Picture of demo application running 
-
-\section{Conclusion}
-
+\section{Conclusion and perspectives}
+% goal is to maintain state-of-the-art framework ready for production, setting up benchmarking platform to encourage contributions from user and other system developper and forum for sharing recipes between users
 
 \bibliography{writeup}
 \bibliographystyle{eacl2017}
