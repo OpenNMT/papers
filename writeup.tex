@@ -47,15 +47,13 @@
 \begin{abstract}
 
   We describe an open-source toolkit for neural machine translation
-  that supports research development of attention-based
-  encoder-decoder models.  The toolkit prioritizes efficiency,
-  modularity, and extensibility to make it reasonable for researchers to
-  experiment with variants of neural machine translation that explore
-  different feature representations, model architectures, and source
-  modalities, while maintaining competitive performance and
-  tractable training requirements. The toolkit consists of modeling
-  and decoding support, as well as detailed pedagogical documentation
-  about the underlying methodologies.
+  (NMT).  The toolkit prioritizes efficiency, modularity, and
+  extensibility with the goal of supporting NMT research into model
+  architectures, feature representations, and source modalities, while
+  maintaining competitive performance and reasonable training
+  requirements. The toolkit consists of modeling and decoding support,
+  as well as detailed pedagogical documentation about the underlying
+  techniques.
 
 \end{abstract}
 
@@ -63,28 +61,26 @@
 
 
 Neural machine translation (NMT) is a new methodology for machine
-translation that has led to remarkable improvements particularly in
-terms of human judgment of translation quality compared to rule-based
-and statistical machine translation systems
+translation that has led to remarkable improvements, particularly in
+terms of human evaluation, compared to rule-based
+and statistical machine translation (SMT) systems
 \cite{wu2016google,systran}. Originally developed using pure
 sequence-to-sequence models \cite{sutskever14sequence,Cho2014} and
-improved upon using attention-based variants \cite{Bahdanau2015,
-  Luong2015}, it has now become a standard methodology for machine
+improved upon using attention-based variants \cite{Bahdanau2015,Luong2015}, NMT has now become a widely-applied technique for machine
 translation, as well as an effective approach for other related NLP
 tasks such as dialogue, parsing, and summarization.
 
-As neural machine translation becomes standardized, it becomes more
-important for the machine translation and NLP community to develop
-standard reference implementations for researchers to benchmark
-against, learn from, and extend upon. Just as the SMT community
-benefited greatly from toolkits like Moses \cite{koehn2007moses} for phrase-based MT
-and the CDec toolkit \cite{dyer2010cdec} for syntax-based MT, standard NMT
-toolkits can provide the foundation to compare results and develop a
-more robust open-source community. A toolkit should aim to
-provide a shared frameworks for developing and comparing open-source
-SMT systems that are complete and flexible enough for research
-development, while at the same time being efficient and accurate
-enough to be used production contexts. 
+As NMT approaches are standardized, it becomes more important for the
+machine translation and NLP community to develop standard
+implementations for researchers to benchmark against, learn from, and
+extend upon. Just as the SMT community benefited greatly from toolkits
+like Moses \cite{koehn2007moses} for phrase-based MT and the CDec
+toolkit \cite{dyer2010cdec} for syntax-based MT, NMT toolkits can
+provide a foundation for the research community. A toolkit should aim
+to provide a shared frameworks for developing and comparing
+open-source systems that provide state-of-the-art results and are
+flexible enough for research development, while at the same time being
+efficient and accurate enough to be used production contexts.
 
 
 \begin{figure}
@@ -103,33 +99,26 @@ enough to be used production contexts.
 % development, while at the same time being efficient and accurate
 % enough to be used production contexts. 
 
-Currently there are many different existing NMT implementations. Many
-systems such as those developed in industry by Google
-\cite{wu2016google}, Microsoft, and Baidu, are closed source, and are
-unlikely to be released with unrestricted licenses. Many other systems
-such as GroundHog, Blocks, tensorflow-seq2seq, and our own
-seq2seq-attn, exist mostly as research code. These libraries provide
-partial functionality and minimal support. All provide some subset of
-efficiency, completeness, high accuracy, modularity, and clear
-documentation. Perhaps most promising is the Edinburgh NeMaTus system
-originally based on NYU's system. NeMaTus provides high-accuracy
-translation, many options, clear documentation, and has been used in
-several successful research projects. We hope to complement this type
-of system to provide a useful open-source NMT framework for the
-NLP community in academia and industry.
+Currently there are several existing NMT implementations. Many systems
+such as those developed in industry by Google \cite{wu2016google},
+Microsoft, and Baidu, are closed source, and are unlikely to be
+released with unrestricted licenses. Many other systems such as
+\textit{GroundHog}, \textit{Blocks}, \textit{tensorflow-seq2seq}, and our own \textit{seq2seq-attn}, exist
+mostly as research code. These libraries provide important
+functionality but minimal support to production users. Perhaps most
+promising is the University of Edinburgh's \textit{Nematus} system originally based on NYU's NMT system. Nematus provides high-accuracy translation, many options,
+clear documentation, and has been used in several successful research
+projects. In the development of this project, we aimed to build upon he strengths of this system, while providing additional documentation and functionality to provide a
+useful open-source NMT framework for the NLP community in academia and
+industry.
 
 With this goal in mind, we introduce \textit{OpenNMT} (\url{http://opennmt.net}), an open-source framework
 for neural machine translation. OpenNMT is a complete NMT
 implementation. In addition to providing code for the core translation
-tasks, OpenNMT was designed with three criteria:
+tasks, OpenNMT was designed with three aims:
+(a) prioritize first training and test efficiency, (b) maintain model modularity and readability, (c) support significant research extensibility.
 
-\begin{enumerate}
-\item prioritize first training and test efficiency
-\item maintain model modularity and readability
-\item support significant research extensibility  
-\end{enumerate}
-
-This technical report describes the how the first-release of the
+This report describes how the first-release of the
 system targets these criteria. We begin by briefly surveying the
 background for NMT, describing the high-level implementation details,
 and then describing specific case studies for the three criteria.  We
@@ -163,9 +152,9 @@ translation-like tasks.
 
 \section{Background}
 
-Neural machine translation has now been extensively described in many
+NMT has now been extensively described in many
 excellent papers and tutorials (see for instance
-\url{https://sites.google.com/site/acl16nmt/home}). We therefore give
+\url{https://sites.google.com/site/acl16nmt/home}). We give
 only a condensed overview here. 
 
 NMT takes a conditional language modeling view of translation (as
@@ -181,13 +170,12 @@ $\mathbf{h}_1, \ldots, \mathbf{h}_S$.  The target decoder combines an
 RNN hidden representation of previously generated words
 ($w_1, ... w_{t-1}$) with source hidden vectors to predict scores for
 each possible next word. A softmax layer is then used to produce a
-distribution $ p(w_t| w_{1:t-1}, x; \theta)$. Crucially the source
-hidden vectors are processed through an attention pooling layer that
-weights each source word relative to its expected contribution to the
-target prediction. The complete model is trained end-to-end to
-minimize the negative log-likelihood of the training corpus. An
-unfolded network diagram is shown in
-Figure~\ref{fig:rnn}.
+next-word distribution $ p(w_t| w_{1:t-1}, x; \theta)$. The source
+hidden vectors influence the distribution through an attention pooling
+layer that weights each source word relative to its expected
+contribution to the target prediction. The complete model is trained
+end-to-end to minimize the negative log-likelihood of the training
+corpus. An unfolded network diagram is shown in Figure~\ref{fig:rnn}.
 
 
 In practice, there are also several other important details that
@@ -201,7 +189,7 @@ attention vector is fed back into the input as well as the predicted
 word, has been shown to be quite helpful for machine translation
 \cite{Luong2015}.  (d) Test-time decoding is done through \textit{beam
   search} where multiple hypothesis target predictions are considered
-at each time step. 
+at each time step. These details can be difficult to implement correctly, which motivates their inclusion in an NMT framework.
 
 
 
@@ -213,20 +201,15 @@ at each time step.
 
 \section{Implementation}
 
-OpenNMT is a complete system and library for learning, training, and
+OpenNMT is a complete library for learning, training, and
 deploying neural machine translation models. The system is successor
-to the \textit{seq2seq-attn} system developed at Harvard, using
-roughly the same external interface, but with a complete rewrite of
-the internals to ease readability and generalizability. It includes
+to  \textit{seq2seq-attn} developed at Harvard, and has been completely rewritten for ease of efficiency, readability, and generalizability. It includes 
 vanilla NMT models along with support for attention, gating, stacking,
 input feeding, regularization, beam search and all other options necessary
 for state-of-the-art performance.  
-
 The system is implemented using the Torch mathematical framework and
 neural network library, and can be easily be extended using Torch's
-internal standard neural network components. The current version uses
-its own RNN implementation for fine-grained control of memory
-allocation. 
+internal standard neural network components. 
 
 The system has been developed completely in the open on GitHub at
 (\url{http://github.com/opennmt/opennmt}) and is MIT licensed.  The
@@ -241,7 +224,7 @@ One nice aspect of NMT as a model is its relative compactness. The
 complete OpenNMT system including preprocessing is roughly 4K lines of
 code. For comparison the Moses SMT framework including language
 modeling is over 100K lines. This makes the system easy to completely
-understand for newcomers and contributors. The project is fully autonomous
+understand for newcomers and contributors. The project is fully self-contained
 including also a simple language independent reversible tokenization and
 detokenization tools.
 
@@ -251,82 +234,72 @@ detokenization tools.
 
 
 As the the low-level details of NMT have been covered in previous
-works, we focus this tech report on the top-down design goals of
+works, we focus this report on the design goals of
 OpenNMT. We focused particularly on three ordered criteria:
 system efficiency, code modularity, and model extensibility. 
-Here we present case studies of progress on each goal.
 
 \subsection{System Efficiency}
 
 As NMT systems can take from days to weeks to train, training
-efficiency is a paramount research concern, and the top priority of
-OpenNMT. Slightly faster training can make be the difference between
+efficiency is a paramount concern. Slightly faster training can make be the difference between
 plausible and impossible experiments.
 
 \paragraph{Optimization: Memory Sharing}
 
-With few exceptions, GPUs are currently limited to 12 GB of
-memory. When training NMT models, the memory size limits the plausible
-batch size of the system, and thus directly impacts training time of
-the system. Neural network toolkits, such as Torch, are often designed
-to trade-off extra memory allocations for speed and declarative
+When training GPU-based NMT models, memory size restrictions are the
+most common limiter of batch size, and thus directly impact training
+time. Neural network toolkits, such as Torch, are often designed to
+trade-off extra memory allocations for speed and declarative
 simplicity. For OpenNMT, we wanted to have it both ways, and so we
 implemented an external memory sharing system that exploits the known
 time-series control flow of NMT systems and aggressively shares the
-internal buffers between clones. The possible sharing is dynamically calculated
-by exploration of the network graph before starting the training. 
-This makes the system slightly less flexible than
-toolkits such as Element-RNN \cite{DBLP:journals/corr/LeonardWW15ss},
-but provides a saving of almost 70\% of GPU memory. This in turn
-allows for much larger batch sizes.
+internal buffers between clones. The possible sharing is dynamically
+calculated by exploration of the network graph before starting the
+training.  This makes the system slightly less flexible than toolkits
+such as Element-RNN \cite{DBLP:journals/corr/LeonardWW15ss}, but
+provides a saving of 70\% of GPU memory on the default model. 
 
 \paragraph{Optimization: Multi-GPU} OpenNMT additionally supports multi-GPU
 training using data parallelism. The implementation is relatively straightforward, each GPU
  has a replica of the master parameters and process independent batches during training phase.
-Two modes are available: synchronous and asynchronous training
-\begin{itemize}
-\item in synchronous training, batches on parallel GPU are run simultaneously and gradients 
-aggregated to update master parameters before synchronization on each GPU for the following batch
-\item in asynchronous training, batches are run independent on each GPU, and independent gradients accumulated 
+Two modes are available: synchronous and asynchronous training.
+(1) In synchronous training, batches on parallel GPU are run simultaneously and gradients 
+aggregated to update master parameters before synchronization on each GPU for the following batch.
+(2) In asynchronous training, batches are run independent on each GPU, and independent gradients accumulated 
 to the master copy of the parameters. Asynchronous SGD is known to provide better convergence.
-\end{itemize}
 The parallel implementation uses low level optimized primitive for multi-GPU communication\footnote{see NCCL - https://github.com/NVIDIA/nccl}.
 
-\paragraph{Case Study: C/Mobile/GPU Decoders} During training, NMT
-systems require signficant code complexity and storage to facilitate
-back-propagation-through-time and parameter updates. At test time the
+\paragraph{Case Study: C/Mobile/GPU Decoders} Training NMT
+systems requires significant code complexity to facilitate fast
+back-propagation-through-time. At test time the
 system is much less complex, and only requires (i) forwarding values
 through the network and (ii) running a beam search that is much
 simplified compared to SMT. To exploit this asymetry, OpenNMT includes
 several different decoders specialized for different run-time
-environments: a batched GPU decoder for very quickly translating a
+environments: a batched CPU/GPU decoder for very quickly translating a
 large set of sentences, a simple single-instance decoder for use on
 mobile devices, and a specialized C decoder. The last decoder is
-particularly nice to have for industial use as it can run on CPU in standard
+particularly suited for industial use as it can run on CPU in standard
 production environments. The decoder reads the structure of the
 network from Lua and then uses the Eigen package to implement the
-basic linear algebra necessary for decoding. Decoders are all 
-available at the OpenNMT GitHub (\url{http://github.com/opennmt}).
+basic linear algebra necessary for decoding. 
 
 
 \subsection{Modularity for Research}
 
-While training efficiency was a primary concern, the secondary goal
-was a desire for code readability at the 
-advanced undergraduate-level.  We targeted this goal by explicitly
-separating out the above optimizations from the core model, and by 
-documenting each module with mathematical diagrams describing how 
-it connects to the underlying neural network descriptions. To test whether 
-this approach would allow novel feature development we experimented with 
-two case studies.
+A secondary goal was a desire for code readability for non-experts.
+We targeted this goal by explicitly separating out many optimizations
+from the core model, and by including tutorial documentation within
+the code. To test whether this approach would allow novel feature
+development we experimented with two case studies.
 
 \paragraph{Case Study: Factored Neural Translation}
 
-In feature-based or factored neural translation models
-\cite{sennrich2016linguistic}, instead of simply generating a word at
-each time step, the model generates both word and its features. For
-instance, the model might have a separate case feature, in which case
-it would model the probability of the lower-cased word form and the
+In feature-based factored neural translation
+\cite{sennrich2016linguistic}, instead of  generating a word at
+each time step, the model generates both word and associated features. For
+instance,  the system might include a case features and
+model the probability of the lower-cased word form and the
 case marker. This extension requires modifying both the output of the
 decoder to generate multiple symbols, and also the input to the
 decoder to take in a word and its features. In OpenNMT both of these
@@ -341,10 +314,10 @@ the training data to include the factored words.
 
 The use of attention over the encoder at each step of translation is
 crucial for the model to perform well. The default method is to
-utilize the gloabl attention mechanism proposed by \cite{}. However
+utilize the gloabl attention mechanism. However
 there are many other times of attention that have recently proposed
 including local attention \cite{Luong2015}, sparse-max attention
-\cite{martins2016softmax}, Hierarchical attention
+\cite{martins2016softmax}, hierarchical attention
 \cite{yang2016hierarchical} among others. As this is simply a module
 in OpenNMT it can easily be substituted. Recently the Harvard NLP
 group developed a new method known as structured attention,
@@ -354,43 +327,51 @@ efficiently. However the method is modularized to fit the Torch NN
 interface and can therefore be directly used in OpenNMT to substitute
 for standard attention.
 
+% \paragraph{Case Study: Tokenization}
+% TAKING THIS OUT FOR NOW (4 pages)
 
-Finally, we wanted the project not to depend on third party tools like commonly used Moses tokenizer (in perl) and BPE implementation (in python). Moses tokenizer integrates language specific tokenization heuristic that are not necessary for RNN-based approach. So we introduced a simple tokenization schema - called "reversible tokenization" with following characteristics:
-\begin{itemize}
-\item the tokenization includes markers allowing the detokenization so that all language knowledge is part of the model
-\item the tokenization rules are extremely simple and come in 2 modes. In aggressive mode, transition between letter and number or separtor, between two separators, or between a number and a separator is corresponding to a tokenization mark. In conservative mode, numbers, letters, and symbols {\tt[\-\verb!-\_!]} are grouped together, and the same for numbers and number separator symbol {\tt[.,]}.
-\end{itemize}
-Also tokenizer also perform BPE splitting \cite{BPE}.
+% Finally, we wanted the project not to depend on third party tools like commonly used Moses tokenizer (in perl) and BPE implementation (in python). Moses tokenizer integrates language specific tokenization heuristic that are not necessary for RNN-based approach. So we introduced a simple tokenization schema - called "reversible tokenization" with following characteristics:
+% \begin{itemize}
+% \item the tokenization includes markers allowing the detokenization so that all language knowledge is part of the model
+% \item the tokenization rules are extremely simple and come in 2 modes. In aggressive mode, transition between letter and number or separtor, between two separators, or between a number and a separator is corresponding to a tokenization mark. In conservative mode, numbers, letters, and symbols {\tt[\-\verb!-\_!]} are grouped together, and the same for numbers and number separator symbol {\tt[.,]}.
+% \end{itemize}
+% Also tokenizer also perform BPE splitting \cite{BPE}.
 
-Example of tokenized sentences are given in table ref{tab:token}.
+% Example of tokenized sentences are given in table ref{tab:token}.
 
 \subsection{Extensibility}
 
-The last goal of OpenNMT is to realize the deep learning is a very
-quick moving area and that likely within the next couple years there
-will be many unexpected applications of these style of
-methods. Already we see related, but very different styles of work,
-e.g.  in variational seq2seq variation auto-encoders
-\cite{DBLP:conf/conll/BowmanVVDJB16}, one-shot learning
-\cite{DBLP:conf/nips/VinyalsBLKW16}, or memory network \cite{DBLP:journals/corr/WestonCB14} based models.
+Deep learning is a very quick moving area, and we expect that there
+will soon be many other applications of NMT systems.  Already we see
+related, but very different styles of work, such as variational
+seq2seq variation auto-encoders \cite{DBLP:conf/conll/BowmanVVDJB16}
+or memory networks \cite{DBLP:journals/corr/WestonCB14}. We developed
+a case study to ensure that OpenNMT was extensible to these changes.
+
+
+% A final goal of OpenNMT is  the deep learning is a very
+% quick moving area and that likely within the next couple years there
+% will be many unexpected applications of these style of
+% methods. 
+
 
 
 \paragraph{Case Study: Image-to-Text}
 
-As an extensibilty case study of the library, we experimented with
-implementing a complete attention-based image-to-text translation
-system \cite{DBLP:journals/corr/XuBKCCSZB15} using the OpenNMT
-library. Qualitatively this is a very different problem than standard
-machine translation as the source sentence is an image.  However, the
-future of translation may require this style of (multi-)modal inputs
+In particular experimented with implementing a complete
+attention-based image-to-text translation system
+\cite{DBLP:journals/corr/XuBKCCSZB15} using the OpenNMT library. This
+task is quick different than standard machine translation as the
+source sentence is now an image(!)  However, the future of translation
+may require this style of (multi-)modal inputs
 (e.g. \url{http://www.statmt.org/wmt16/multimodal-task.html}). In
 particular, we adapted the im2markup system
 \cite{DBLP:journals/corr/DengKR16} to instead use OpenNMT as a
-library.  Instead of using word embeddings, this model requires a deep
-convolution over the source input. However as this part of the network
-is pluggable, it could be naturally defined in Torch. In fact,
-excepting preprocessing, the entire adaptation requires only 500 lines
-of code and is open sourced as \url{github.com/opennmt/im2text}
+library.  This model replaces the source RNN with a deep convolution
+over the source input. However as this part of the network is
+pluggable, it could be naturally defined in Torch. In fact, excepting
+preprocessing, the entire adaptation requires only 500 lines of code
+and is also open-sourced as \url{http://github.com/opennmt/im2text}
 
 \section{Benchmarks}
 
