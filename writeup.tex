@@ -391,7 +391,7 @@ the same data and a larger model (800 hidden units, word embedding of 600 dimens
 Additionally we also trained OpenNMT on several non-standard
 translation tasks. First is a summarization model \cite{} ...
 
-Finally we trained a multilingual translation model following \newcite{viegas2016google}. The model translates from and to 
+Finally we trained a multilingual translation model following \newcite{johnson2016google}. The model translates from and to 
 French, Spanish, Portuguese, Italian, and Romanian (FR,ES,PT,IT,RO$\leftrightarrow$FR,ES,PT,IT,RO). Training data is 4M sentences and was selected from the open parallel corpus\footnote{\url{http://opus.lingfil.uu.se}} and specifically from Europarl, GlobalVoices and Ted. Corpus was selected to be multi-source, multi-target: each sentence has its translation in the 4 other languages. The motivation of this selection was to evaluate the model cross-language learning. Corpus was tokenized using shared Byte Pair Encoding of 32k.
 Comparative results between multiway translation and each of the 20 independent training are presented in Table~\ref{tab:esfritptro}.
 
