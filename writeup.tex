@@ -403,15 +403,15 @@ Comparative results between multiway translation and each of the 20 independent 
  \small
   \centering
   \begin{tabular}{cp{10mm}p{10mm}c}
-     Vocabulary & Training\newline Sent/Sec & Translation\newline Sent/Sec & BLEU \\
+     Vocabulary & Training\newline Words/Sec & Translation\newline Words/Sec & BLEU \\
     \toprule
-    Vocab 50k& 160/130 & 16.7/12.5 & 17.6/17.28\\
+    Vocab 50k& 4185/3393 & 380/284 & 17.6/17.28\\
     \midrule
-    BPE 32k& 202/124 & 20.1/11.1 & 19.34/18.25\\
+    BPE 32k& 5254/3221 & 457/252 & 19.34/18.25\\
     \bottomrule
   \end{tabular}
   \label{tab:res}
-  \caption{Performance Results for EN$\rightarrow$DE training on WMT15 corpus tested on newstest2014 - with 2 layers, RNN 500, wordvec size 500, 13 epochs, batch size 64. We compare {\it A}/{\it B} where {\it A} is  training by OpenNMT, {\it B} is equivalent training with Nematus. OpenNMT/Nematus github md5 {\tt 907824}/{\tt 75c6ab1} }
+  \caption{Performance Results for EN$\rightarrow$DE training on WMT15 corpus tested on newstest2014 - with 2 layers, RNN 500, wordvec size 500, 13 epochs, batch size 64. We compare {\it A}/{\it B} where {\it A} is  training by OpenNMT, {\it B} is equivalent training with Nematus. OpenNMT/Nematus github revision {\tt 907824}/{\tt 75c6ab1}.}
 \end{table}
 
 \begin{table*}
