@@ -266,7 +266,7 @@ Two modes are available: synchronous and asynchronous training.
 (1) In synchronous training, batches on parallel GPU are run simultaneously and gradients 
 aggregated to update master parameters before resynchronization on each GPU for the following batch.
 (2) In asynchronous training, batches are run independent on each GPU, and independent gradients accumulated 
-to the master copy of the parameters. Asynchronous SGD is known to provide better convergence \cite{xxxx}.
+to the master copy of the parameters. Asynchronous SGD is known to provide better convergence \cite{dean2012large}.
 
 \paragraph{Case Study: C/Mobile/GPU Decoders} Training NMT
 systems requires significant code complexity to facilitate fast
