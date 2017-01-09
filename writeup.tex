@@ -51,7 +51,7 @@
   extensibility with the goal of supporting NMT research into model
   architectures, feature representations, and source modalities, while
   maintaining competitive performance and reasonable training
-  requirements. The toolkit consists of modeling and decoding support,
+  requirements. The toolkit consists of modeling and translation support,
   as well as detailed pedagogical documentation about the underlying
   techniques.
 
@@ -71,16 +71,15 @@ translation, as well as an effective approach for other related NLP
 tasks such as dialogue, parsing, and summarization.
 
 As NMT approaches are standardized, it becomes more important for the
-machine translation and NLP community to develop standard
+machine translation and NLP community to develop open
 implementations for researchers to benchmark against, learn from, and
 extend upon. Just as the SMT community benefited greatly from toolkits
 like Moses \cite{koehn2007moses} for phrase-based MT and the CDec
 toolkit \cite{dyer2010cdec} for syntax-based MT, NMT toolkits can
 provide a foundation for the research community. A toolkit should aim
-to provide a shared frameworks for developing and comparing
-open-source systems that provide state-of-the-art results and are
-flexible enough for research development, while at the same time being
-efficient and accurate enough to be used production contexts.
+to provide a shared framework for developing and comparing
+open-source systems, while at the same time being
+efficient and accurate enough to be used in production contexts.
 
 
 \begin{figure}
@@ -108,7 +107,7 @@ mostly as research code. These libraries provide important
 functionality but minimal support to production users. Perhaps most
 promising is the University of Edinburgh's \textit{Nematus} system originally based on NYU's NMT system. Nematus provides high-accuracy translation, many options,
 clear documentation, and has been used in several successful research
-projects. In the development of this project, we aimed to build upon he strengths of this system, while providing additional documentation and functionality to provide a
+projects. In the development of this project, we aimed to build upon the strengths of this system, while providing additional documentation and functionality to provide a
 useful open-source NMT framework for the NLP community in academia and
 industry.
 
@@ -153,9 +152,9 @@ translation-like tasks.
 \section{Background}
 
 NMT has now been extensively described in many
-excellent papers and tutorials (see for instance
+excellent tutorials (see for instance
 \url{https://sites.google.com/site/acl16nmt/home}). We give
-only a condensed overview here. 
+a condensed overview. 
 
 NMT takes a conditional language modeling view of translation (as
 opposed to the noisy channel view of SMT). Formally NMT models the
