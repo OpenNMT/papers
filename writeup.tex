@@ -378,15 +378,12 @@ and is also open-sourced as \url{http://github.com/opennmt/im2text}.
 In this section we document preliminary runs of the model. We expect
 performance and memory usage to improve with further development.
 
-These benchmarks are run using a machine Intel(R) Core(TM) i7-6800K CPU @
-3.40GHz, 256GB Mem, trained on 1 GPU TITAN X (Pascal version) with
-CUDA v. 8.0.  Run on English-to-German (EN$\rightarrow$DE) and
-German-to-English (DE$\rightarrow$EN) using the WMT 2015\footnote{\url{http://statmt.org/wmt15}}
-dataset. These benchmarks are run using the default parameters of
-OpenNMT which is a two-layer encoder-decoder LSTM model with 500
-hidden units per layer. For comparison we also run the Nematus \footnote{\url{https://github.com/rsennrich/nematus}} system on 
-the same data and a larger model (800 hidden units, word embedding of 600 dimension and 4 layers). Results are show in Table~\ref{tab:res}. 
+These benchmarks are run using a machine Intel(R) Core(TM) i7-5930K CPU @ 3.50GHz, 256GB Mem, trained on 1 GPU GeForce GTX 1080 (Pascal) with
+CUDA v. 8.0 (driver 375.20) and cuDNN (ver. 5005). 
 
+The first model is on English-to-German (EN$\rightarrow$DE) using the WMT 2015\footnote{\url{http://statmt.org/wmt15}}
+dataset. For comparison we also run the Nematus \footnote{\url{https://github.com/rsennrich/nematus}} system on 
+the same data. Results are show in Table~\ref{tab:res}. 
 
 Additionally we also trained OpenNMT on several non-standard
 translation tasks. First is a summarization model \cite{} ...
@@ -405,17 +402,16 @@ Comparative results between multiway translation and each of the 20 independent 
 \begin{table}
  \small
   \centering
-  \begin{tabular}{cccc}
+  \begin{tabular}{cp{10mm}p{10mm}c}
+     Vocabulary & Training\newline Sent/Sec & Translation\newline Sent/Sec & BLEU \\
     \toprule
-     Language & Sent/Sec & BLEU \\
+    Vocab 50k& 160/130 & 16.7/12.5 & 17.6/17.28\\
     \midrule
-    DE$\rightarrow$EN& 220/xxx/xxx & 20.6/xx.x/xx.x\\
-    \midrule
-    EN$\rightarrow$DE& 220/xxx/xxx & 17.6/xx.x/xx.x - 20.9\\
+    BPE 32k& 202/124 & 20.1/11.1 & 19.34/18.25\\
     \bottomrule
   \end{tabular}
   \label{tab:res}
-  \caption{Performance Results for EN$\leftrightarrow$DE training on WMT15 corpus. We compare {\it A}/{\it B}/{\it C} - {\it D} where {\it A} is 2x500x500 baseline training by OpenNMT, {\it B} is equivalent training with Nematus, {\it C} 4x800x600 training, and {\it D} is score obtained in \cite{Luong2015}}
+  \caption{Performance Results for EN$\rightarrow$DE training on WMT15 corpus tested on newstest2014 - with 2 layers, RNN 500, wordvec size 500, 13 epochs. We compare {\it A}/{\it B} where {\it A} is  training by OpenNMT, {\it B} is equivalent training with Nematus. OpenNMT/Nematus github md5 {\tt 907824}/{\tt 75c6ab1} }
 \end{table}
 
 \begin{table*}
