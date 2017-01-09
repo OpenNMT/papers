@@ -281,22 +281,22 @@ production environments. The decoder reads the structure of the
 network from Lua and then uses the \textit{Eigen} package to implement the
 basic linear algebra necessary for decoding. 
 
-\begin{table*}[ht]
+\begin{table}[ht]
   \small \centering
   \begin{tabular}{lccccc}
     \toprule
           & ES & FR & IT & PT & RO \\
     \midrule
-ES	& - & 32.71 (+5.43)	 & 28.00 (+4.64) & 34.41 (+6.08) & 28.73 (+6.45) \\ 
-FR	& 32.87 (+3.30)	& -  & 26.32 (+4.25)	 & 30.89 (+5.16) & 25.95 (+6.64) \\
-IT     & 31.64 (+5.34)	 & 31.03 (+5.81) & - & 27.96 (+4.98) & 24.27 (+5.90) \\
-PT	& 35.32 (+10.38) & 34.08 (+4.68) & 28.09 (+5.55) & - & 28.73 (+5.03)\\
-RO	& 35.00 (+5.37) & 31.94 (+9.07) & 26.38 (+6.34) & 31.63 (+7.29) & -\\
+ES	& - & \scriptsize 32.7 +5.4	 & \scriptsize 28.0 +4.6 & \scriptsize 34.4 +6.1 & \scriptsize 28.7 +6.4 \\ 
+FR	& \scriptsize 32.9 +3.3	& -  & \scriptsize 26.3 +4.3	 & \scriptsize 30.9 +5.2 & \scriptsize 26.0 +6.6 \\
+IT     & \scriptsize 31.6 +5.3	 & \scriptsize 31.0 +5.8 & - & \scriptsize 28.0 +5.0 & \scriptsize 24.3 +5.9 \\
+PT	& \scriptsize 35.3 +10.4 & \scriptsize 34.1 +4.7 & \scriptsize 28.1 +5.6 & - & \scriptsize 28.7 +5.0\\
+RO	& \scriptsize 35.0 +5.4 & \scriptsize 31.9 +9.0 & \scriptsize 26.4 +6.3 & \scriptsize 31.6 +7.3 & -\\
     \bottomrule
   \end{tabular}
   \label{tab:esfritptro}
-  \caption{\small 20 language pair single translation model. Table shows BLEU ($\Delta$) where $\Delta$ compares to only using that pair. }
-\end{table*}
+  \caption{\small 20 language pair single translation model. Table shows BLEU $\Delta$ where $\Delta$ compares to only using that pair for training. }
+\end{table}
 
 \subsection{Modularity for Research}
 
@@ -458,11 +458,10 @@ that language pair benefits from training jointly with the  other language pairs
 
 \section{Conclusion}
 
-We introduce \texit{OpenNMT}, a research toolkit for NMT is
+We introduce \textit{OpenNMT}, a research toolkit for NMT that
 prioritizes efficiency and modularity. We hope to further develop
-OpenNMT to maintain strong MT results at the research frontier, while
-providing a stable framework for production use.
-
+OpenNMT to maintain strong MT results at the research frontier, 
+providing a stable and extensible framework for production use.
 
  
 
