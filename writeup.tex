@@ -102,7 +102,7 @@ Currently there are several existing NMT implementations. Many systems
 such as those developed in industry by Google \cite{wu2016google},
 Microsoft, and Baidu, are closed source, and are unlikely to be
 released with unrestricted licenses. Many other systems such as
-\textit{GroundHog}, \textit{Blocks}, \textit{tensorflow-seq2seq}, and our own \textit{seq2seq-attn}, exist
+\textit{GroundHog}, \textit{Blocks}, \textit{tensorflow-seq2seq}, \textit{lamtram}, and our own \textit{seq2seq-attn}, exist
 mostly as research code. These libraries provide important
 functionality but minimal support to production users. Perhaps most
 promising is the University of Edinburgh's \textit{Nematus} system originally based on NYU's NMT system. Nematus provides high-accuracy translation, many options,
@@ -156,8 +156,7 @@ excellent tutorials (see for instance
 \url{https://sites.google.com/site/acl16nmt/home}). We give
 a condensed overview. 
 
-NMT takes a conditional language modeling view of translation (as
-opposed to the noisy channel view of SMT). Formally NMT models the
+NMT takes a conditional language modeling view of translation by modeling the
 probability of a target sentence $w_{1:T}$ given a source sentence
 $x_{1:S}$ as
 $p(w_{1:T}| x) = \prod_{1}^T p(w_t| w_{1:t-1}, x; \theta)$. This
@@ -177,7 +176,7 @@ end-to-end to minimize the negative log-likelihood of the training
 corpus. An unfolded network diagram is shown in Figure~\ref{fig:rnn}.
 
 
-In practice, there are also several other important details that
+In practice, there are also several other important aspects that
 contribute to model effectiveness: (a) It is important to use a gated
 RNN such as an LSTM \cite{hochreiter1997long} or GRU
 \cite{chung2014empirical} which help the model learn long-term
@@ -188,7 +187,7 @@ attention vector is fed back into the input as well as the predicted
 word, has been shown to be quite helpful for machine translation
 \cite{Luong2015}.  (d) Test-time decoding is done through \textit{beam
   search} where multiple hypothesis target predictions are considered
-at each time step. These details can be difficult to implement correctly, which motivates their inclusion in an NMT framework.
+at each time step. Implementing these correctly can be difficult, which motivates their inclusion in an NMT framework.
 
 
 
@@ -224,7 +223,7 @@ complete OpenNMT system including preprocessing is roughly 4K lines of
 code. For comparison the Moses SMT framework including language
 modeling is over 100K lines. This makes the system easy to completely
 understand for newcomers and contributors. The project is fully self-contained
-depending on minimal number of external lua libraries and including also a simple
+depending on minimal number of external Lua libraries and including also a simple
  language independent reversible tokenization and detokenization tools.
 
 
@@ -232,9 +231,9 @@ depending on minimal number of external lua libraries and including also a simpl
 \section{Design Goals}
 
 
-As the the low-level details of NMT have been covered in previous
+As the low-level details of NMT have been covered in previous
 works, we focus this report on the design goals of
-OpenNMT. We focused particularly on three ordered criteria:
+OpenNMT. We focus particularly on three ordered criteria:
 system efficiency, code modularity, and model extensibility. 
 
 \subsection{System Efficiency}
@@ -252,22 +251,22 @@ trade-off extra memory allocations for speed and declarative
 simplicity. For OpenNMT, we wanted to have it both ways, and so we
 implemented an external memory sharing system that exploits the known
 time-series control flow of NMT systems and aggressively shares the
-internal buffers between clones. The potential shared buffers is dynamically
-calculated by exploration of the network graph before starting the
+internal buffers between clones. The potential shared buffers are dynamically
+calculated by exploration of the network graph before starting
 training.  This makes the system slightly less flexible than toolkits
-such as Element-RNN \cite{DBLP:journals/corr/LeonardWW15ss}, but
+such as Element-RNN \cite{DBLP:journals/corr/LeonardWW15}, but
 provides a saving of 70\% of GPU memory on the default model. 
 
 \paragraph{Optimization: Multi-GPU} OpenNMT additionally supports multi-GPU
 training using data parallelism. Each GPU has a replica of the master parameters
  and process independent batches during training phase.
 Two modes are available: synchronous and asynchronous training.
-(1) In synchronous training, batches on parallel GPU are run simultaneously and gradients 
+In synchronous training, batches on parallel GPU are run simultaneously and gradients 
 aggregated to update master parameters before resynchronization on each GPU for the following batch.
-(2) In asynchronous training, batches are run independent on each GPU, and independent gradients accumulated 
-to the master copy of the parameters. Asynchronous SGD is known to provide better convergence \cite{dean2012large}.
+In asynchronous training, batches are run independent on each GPU, and independent gradients accumulated 
+to the master copy of the parameters. Asynchronous SGD is known to provide faster convergence \cite{dean2012large}.
 
-\paragraph{Case Study: C/Mobile/GPU Decoders} Training NMT
+\paragraph{Case Study: C/Mobile/GPU Translation} Training NMT
 systems requires significant code complexity to facilitate fast
 back-propagation-through-time. At test time, the
 system is much less complex, and only requires (i) forwarding values
