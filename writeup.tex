@@ -278,7 +278,7 @@ large set of sentences, a simple single-instance decoder for use on
 mobile devices, and a specialized C decoder. The last decoder is
 particularly suited for industrial use as it can run on CPU in standard
 production environments. The decoder reads the structure of the
-network from Lua and then uses the Eigen package to implement the
+network from Lua and then uses the \textit{Eigen} package to implement the
 basic linear algebra necessary for decoding. 
 
 
@@ -312,16 +312,15 @@ the training data to include the factored words.
 The use of attention over the encoder at each step of translation is
 crucial for the model to perform well. The default method is to
 utilize the global attention mechanism. However
-there are many other times of attention that have recently proposed
+there are many other types of attention that have recently proposed
 including local attention \cite{Luong2015}, sparse-max attention
 \cite{martins2016softmax}, hierarchical attention
 \cite{yang2016hierarchical} among others. As this is simply a module
 in OpenNMT it can easily be substituted. Recently the Harvard NLP
 group developed a new method known as structured attention,
 that utilizes graphical model inference to compute this attention. The
-method was quite involved and required custom CUDA code to compute
-efficiently. However the method is modularized to fit the Torch NN
-interface and can therefore be directly used in OpenNMT to substitute
+method is quite computationally complex; however as it is modularized by the Torch
+interface, it can be used in OpenNMT to substitute
 for standard attention.
 
 % \paragraph{Case Study: Tokenization}
@@ -338,12 +337,12 @@ for standard attention.
 
 \subsection{Extensibility}
 
-Deep learning is a very quick moving area, and we expect that there
-will soon be many other applications of NMT systems.  Already we see
-related, but very different styles of work, such as variational
-seq2seq variation auto-encoders \cite{DBLP:conf/conll/BowmanVVDJB16}
-or memory networks \cite{DBLP:journals/corr/WestonCB14}. We developed
-a case study to ensure that OpenNMT was extensible to these changes.
+Deep learning is a quickly evolving field. Recently work such as
+variational seq2seq variation auto-encoders
+\cite{DBLP:conf/conll/BowmanVVDJB16} or memory networks
+\cite{DBLP:journals/corr/WestonCB14}, propose interesting extensions
+to basic seq2seq models. We next discuss a case study to demonstrate that OpenNMT
+is extensible to future variants.
 
 
 % A final goal of OpenNMT is  the deep learning is a very
@@ -426,7 +425,7 @@ RO	& 35.00 (+5.37) & 31.94 (+9.07) & 26.38 (+6.34) & 31.63 (+7.29) & -\\
     \bottomrule
   \end{tabular}
   \label{tab:esfritptro}
-  \caption{Performance Results for the twenty language pairs with the unique translation model. In parenthesis, score improvement compared to individual models trained with only the language pair data. The systematic huge improvement shows that each language pairs benefits from the learning of other language pairs which is remarkable since the corpus is completely parallel for the 5 languages which means that for a given language pair, no additional source or target sentence is presented to the system in another language pair.}
+  \caption{\small Performance Results for the twenty language pairs with the unique translation model. In parenthesis, score improvement compared to individual models trained with only the language pair data. The systematic huge improvement shows that each language pairs benefits from the learning of other language pairs which is remarkable since the corpus is completely parallel for the 5 languages which means that for a given language pair, no additional source or target sentence is presented to the system in another language pair.}
 \end{table*}
 
 % Picture of demo application running 
