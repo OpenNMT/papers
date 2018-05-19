@@ -119,13 +119,7 @@ However, transformer networks still require a large number of parameters and als
 As a result, the parallelizable training, the flexibility in modeling both long-range/local
 dependencies, and the state-of-the-art performance make this architecture suitable to act as the teacher system.
 
-We used \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}} to train two transformer based systems: base and large.
-The large system  use a larger fully connected network $d_{ff}=4096$ compared to base $d_{ff}=2048$.
-We used 4 GPUs for the training for 350K iterations with a batch size of 8192.
-The learning rate is set to 2.0 and warmup steps 8000.
-We average the last 8 checkpoints to get the final model.
-Evaluations on these two systems on the testsets are presented in Table \ref{table:transformer}, our baseline system outperforms in particular the provided sockeye model with +0.37 BLEU on newstest 2014.
-
+We used \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}} to train two transformer based systems: base and large described in table \ref{table:transformer} with their evaluation. For both, the learning rate is set to 2.0 and warmup steps 8000, we average the last 8 checkpoints to get the final model. Our baseline system outperforms in particular the provided baseline sockeye model with +0.37 BLEU on newstest 2014.
 
 \subsection{Distillation}
 \label{distill}
