@@ -128,7 +128,7 @@ We follow the method described in \newcite{distillation}. Firstly, we build the 
 Then, we use this simplified corpus (original source and newly generated target) to train a student system, in our case a sequence-to-sequence models similar to \newcite{bahdanau2014neural}.
 The student system can be assigned with smaller network size and this process is called distillation.
 
-According to \newcite{DBLP:journals/corr/CregoS16}, distillation process not only improves throughput of the models and reduce their size, but can also improve the translation quality if the width of the network is not reduced too much. Also, these distilled systems have the interesting feature that they performed almost identically for beam 2 or beam 5 beam search. The interpretation for these facts being that the teacher produced simplified translations. That is, translations that are usually closer, in terms of syntactic structure and even word choices, to the input sentences than reference translations. Thus the student model better manage to learn and generalize this simplified knowledge. One major question here was to find out whether distillation from an transformer model could benefit a student RNN model. We show in table  \textcolor{red}{XX} that this seems to be the case, since the best distilled system outperforms a larger model trained with the original data.
+According to \newcite{DBLP:journals/corr/CregoS16}, distillation process not only improves throughput of the models and reduce their size, but can also improve the translation quality if the width of the network is not reduced too much. Also, these distilled systems have the interesting feature that they performed almost identically for beam 2 or beam 5 beam search. The interpretation for these facts being that the teacher produced simplified translations. That is, translations that are usually closer, in terms of syntactic structure and even word choices, to the input sentences than reference translations. Thus the student model better manage to learn and generalize this simplified knowledge. One major question here was to find out whether distillation from an transformer model could benefit a student RNN model. We proved it was the case, since the best distilled system outperforms a larger model trained with the original data.
 
 \subsection{Sequence to Sequence}
 \label{seq2seq}
@@ -137,8 +137,12 @@ Our baseline NMT system follows the architecture presented in ~\newcite{luong-ph
 %Additional details are given in \cite{DBLP:journals/corr/CregoKKRYSABCDE16}.
 
 \begin{figure}
+\scalebox{0.9}{
 \includegraphics[width=\linewidth]{decoder.pdf}
+}
+\scalebox{0.9}{
 \includegraphics[width=\linewidth]{decoder_linear.pdf}
+}
 \caption{Profiling of the throughput during inference of newstest2014. Each line is a different system. The {\tt LSTM-1,2,5} are baseline systems with respective beam size of 1, 2, 5. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the presented systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
 \label{fig:decoding_cost}
 \end{figure}
@@ -205,7 +209,7 @@ We present in table \ref{table:ngram} several vocabulary maps with these differe
 \subsection{Quantization}
 \label{quantize}
 % nothing specific but extensipon to AVX512
-We use 16-bit signed integer quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance, supporting AVX512 SIMD instructions, we extended the approach to AVX2 and AVX512. Switching from SSE4 to AVX2, then from AVX2 to AVX512 instructions set gave additional speed boost of respectively $+12\%$ and $+6\%$. 
+We use 16-bit signed integer quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance, supporting AVX512 SIMD instructions, we extended the approach to AVX2 and AVX512. Switching from SSE4 to AVX2, then from AVX2 to AVX512 instructions set gave additional speed boost of respectively $+12\%$ and $+6\%$.
 
 \subsection{Further potential optimizations and negative results}
 
@@ -309,7 +313,7 @@ We train through distillation a fat encoder, thin decoder sequence to sequence N
 
 
 We need to note that at this level of optimization, especially the use of quantization, makes the speed measurement very dependent on other processes running on the same instance, especially due to the critical importance of the L3/L4-cache shared between the different cores. In particular, we observed that 4 parallel process using fastest model were only reaching a x3 speed boost. To go further on parallel decoding, one would need to implement synchronization points between parallel decoding to avoid waste of memory cache transfer.
- 
+
 %\section*{Acknowledgments}
 %
 %The acknowledgments should go immediately before the references.  Do not number the acknowledgments section ({\em i.e.}, use \verb|\section*| instead of \verb|\section|). Do not include this section when submitting your paper for review.
