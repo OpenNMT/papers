@@ -165,7 +165,7 @@ For these observations, it is obvious that we needed to optimize the efficiency 
 
 On the model architecture, we tried different model combination based on a "fat encoder, thin decoder" spirit: ie. increasing if necessary the number of operations in the encoder part if we can in parallel reduce the number of operations in the decoder.
 
-Also, we tried to substitute LSTM cell with GRU cells. Indeed LSTM cells have 4 gates while GRU cells only 3, so potentially leading to a 25\% improvement in speed. We are not aware of any comprehensive study comparing relative efficiency of GRU vs LSTM. Our findings show that almost similar performance can be reached (see figure XX). However, GRU requires more care in optimization method while a naive SGD optimization is generally sufficient for LSTM-RNN trainings.
+Also, we tried to substitute LSTM \newcite{Hochreiter:1997:LSM:1246443.1246450} cell with GRU cells \newcite{DBLP:journals/corr/ChoMGBSB14}. Indeed LSTM cells have 4 gates while GRU cells only 3, so potentially leading to a 25\% improvement in speed. We are not aware of any comprehensive study comparing relative efficiency of GRU vs LSTM. Our findings show that almost similar performance can be reached (see figure XX). However, GRU requires more care in optimization method while a naive SGD optimization is generally sufficient for LSTM-RNN trainings.
 
 \section{Decoding optimization}
 
