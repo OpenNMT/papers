@@ -191,20 +191,20 @@ We present in table \ref{table:ngram} multiple vocabulary maps with these differ
 \centering
 \begin{tabular}{lcccccccc}
 \hline
-\multirow{2}{*}{MS} & \multirow{2}{*}{MF} & \multirow{2}{*}{KM} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}vocab\\ per token\end{tabular}} & \multirow{2}{*}{match} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Linear\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}SoftMax\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{Memory} & \multirow{2}{*}{BLEU} \\
+\multirow{2}{*}{MS} & \multirow{2}{*}{MF} & \multirow{2}{*}{KM} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}vocab\\ per token\end{tabular}} & \multirow{2}{*}{TC} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Linear\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}SoftMax\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{File Size} & \multirow{2}{*}{BLEU} \\
 \\ \hline
- &  &  &  &  & 143.86 & 4.97 & 239024 & 23.24 \\ \hline
-1 & 1 & 50 & 2 & 30\% & 3.78 & 0.11 & 295532 & 21.98 \\ \hline
-2 & 1 & 100 & 24 & 86\% & 5.97 & 0.16 & 901864 & 23.13 \\ \hline
-2 & 1 & 150 & 25 & 86\% & 6.63 & 0.18 & 918316 & 23.16 \\ \hline
-2 & 1 & 50 & 22 & 85\% & 5.34 & 0.14 & 846292 & 23.09 \\ \hline
-2 & 2 & 100 & 22 & 85\% & 4.08 & 0.11 & 324348 & 23.02 \\ \hline
-2 & 2 & 150 & 22 & 85\% & 3.95 & 0.11 & 324364 & 23.02 \\ \hline
-2 & 2 & 50 & 20 & 84\% & 3.95 & 0.11 & 322744 & 23.03 \\ \hline
-3 & 1 & 50 & 30 & 90\% & 5.23 & 0.15 & 1127752 & 23.16 \\ \hline
+ &  &  &  &  & 143.86 & 4.97 & 239M & 23.24 \\ \hline
+1 & 1 & 50 & 2 & 30\% & 3.78 & 0.11 & 295M & 21.98 \\ \hline
+2 & 1 & 100 & 24 & 86\% & 5.97 & 0.16 & 902M & 23.13 \\ \hline
+2 & 1 & 150 & 25 & 86\% & 6.63 & 0.18 & 918M & 23.16 \\ \hline
+2 & 1 & 50 & 22 & 85\% & 5.34 & 0.14 & 846M & 23.09 \\ \hline
+2 & 2 & 100 & 22 & 85\% & 4.08 & 0.11 & 324M & 23.02 \\ \hline
+2 & 2 & 150 & 22 & 85\% & 3.95 & 0.11 & 324M & 23.02 \\ \hline
+2 & 2 & 50 & 20 & 84\% & 3.95 & 0.11 & 322M & 23.03 \\ \hline
+3 & 1 & 50 & 30 & 90\% & 5.23 & 0.15 & 1127M & 23.16 \\ \hline
 
 \end{tabular}
-\caption{Evaluations of n-gram vocabulary mappings on Newstest2014}
+\caption{Evaluations of n-gram vocabulary mappings on newstest2014.}
 \label{table:ngram}
 \end{table*}
 
@@ -223,7 +223,7 @@ Assuming the same efficiency in the vocabulary mapping, increasing the size of t
 
 \subsubsection{8-bit quantization}
 
-To reduce further the system size, we also considered use of {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}. {\tt gemmlowp} is a library allowing quantization to unsigned 8 bits integer through dynamic offset/multiplier/shift parameters. Like our implementation of 16-bit quantization, the low precision is only for storing the parameters, the dot product is using larger register for accumulating intermediate result of the operation. {\tt gemmlowp} usage is for embedded application where speed but also power usage is critical. The idea was tempting, but it was not clear if such quantization schema could actually outperform quantization using SIMD extended instruction set on modern processors. We ran  comparative tests using AVX2 instructions set and found out that for multiplications of large matrixes $(20,1024) * (1024,512)$ - optimized INT16 implementation was 3 times faster than  {\tt gemmlowp} UINT8 implementation. Main reason being that AVX2 (and AVX512 twice faster) have a very powerful multiply and add instructions\footnote{{\tt \_mm256\_madd\_epi16} and {\tt \_mm512\_madd\_epi16}} allowing to perform in one single cycle dot product of 32 INT16 vector and pair accumulation in a 16 INT32 vector.
+To reduce further the system size, we also considered use of {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}. {\tt gemmlowp} is a library allowing quantization to unsigned 8 bits integer through dynamic offset/multiplier/shift parameters. Like our implementation of 16-bit quantization, the low precision is only for storing the parameters, the dot product is using larger register for accumulating intermediate result of the operation. {\tt gemmlowp} usage is for embedded application where speed but also power usage is critical. The idea was tempting, but it was not clear if such quantization schema could actually outperform quantization using SIMD extended instruction set on modern processors. We ran  comparative tests using AVX2 instructions set and found out that for multiplications of large matrixes $(20,1024) * (1024,512)$ - optimized INT16 implementation was about 3 times faster than  {\tt gemmlowp} UINT8 implementation\footnote{On Intel(R) Core(TM) i7-6850K CPU @ 3.60GHz}. Main reason being that AVX2 (and AVX512 twice faster) have a very powerful multiply and add instructions\footnote{{\tt \_mm256\_madd\_epi16} and {\tt \_mm512\_madd\_epi16}} allowing to perform in one single cycle the dot product of vectors 32*INT16 and at the same time, the pair accumulation in a vector 16*INT32.
 
 % FC
 % Justin small embedding
