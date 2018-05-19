@@ -223,7 +223,7 @@ We use 16-bit signed integer quantization method proposed in \newcite{DBLP:journ
 
 \subsection{Further potential optimizations and negative results}
 \begin{itemize}
-\item \underline{Increasing vocabulary size to decrease the sentence length:}
+\item \underline{Decrease the sentence length:}
 For BPE preprocessing, we try using 64K merges which can generate much shorter sentences.
 The average sentence length for 32K BPE is about 29.1 and for 64K BPE, it is about 27.7 tokens. Assuming the same efficiency in the vocabulary mapping, increasing the size of the vocabulary could therefore have gain about 5\% additional speed-up just by the reduction of the sentence length.
 
