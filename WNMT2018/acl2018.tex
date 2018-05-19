@@ -157,6 +157,12 @@ Our baseline NMT system follows the architecture presented in ~\newcite{luong-ph
 \label{fig:decoding_cost}
 \end{figure}
 
+\begin{figure}
+\includegraphics[width=\linewidth]{beambatch.png}
+\caption{Evaluations on different beam size and batch size}
+\label{fig:beam_batch_bleu}
+\end{figure}
+
 Profiling of the throughput of such system is presented in Figure \ref{fig:decoding_cost}. From this analysis we gather the following facts:
 
 \begin{itemize}
@@ -299,11 +305,6 @@ As shown in Figure \ref{fig:beam_batch_bleu}, for a fixed batch size, when we in
 While for beam size 3, 4 and 5, there is no significant difference in accuracy which is consistent with previous findings on distilled system.
 Interestingly, for a fixed beam size, we notice also a slight improvement of accuracy when increasing the batch size as a side-effect of the dynamic vocabulary mapping and showing that some additional optimizations could be obtained on vocabulary mapping selection.
 
-\begin{figure}
-\includegraphics[width=\linewidth]{beambatch.png}
-\caption{Evaluations on different beam size and batch size}
-\label{fig:beam_batch_bleu}
-\end{figure}
 %\input{beam_batch_newstest2014.tex}
 
 At the same time, the decoding cost is increasing when larger beam and batch size are setting (Figure \ref{fig:beam_batch_bleu}).
