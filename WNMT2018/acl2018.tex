@@ -147,7 +147,7 @@ The encoder is a bidirectional neural network that reads an input sequence $s = 
 \begin{figure}
 \includegraphics[width=\linewidth]{decoder.pdf}
 \includegraphics[width=\linewidth]{decoder_linear.pdf}
-\caption{Profiling of the throughput during inference of newstest2014. Each line is a different system. The {\tt LSTM-1,2,3} are baseline systems with respective beam size of 1, 2, 3. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the presented systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
+\caption{Profiling of the throughput during inference of newstest2014. Each line is a different system. The {\tt LSTM-1,2,5} are baseline systems with respective beam size of 1, 2, 5. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the presented systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
 \label{fig:decoding_cost}
 \end{figure}
 
@@ -184,9 +184,9 @@ CTranslate's goal is to offer a lightweight and embeddable solution for executin
 \subsection{Reduction of vocabulary size}
 % find reference paper
 % our contribution to extend n-gram level
-To reduce the size of the vocabulary for each batch, we started up from word alignment method presented in \cite{shi2017speeding}. This approach is essentially a 1-gram approach. However to increase the coverage of the selected meanings without increasing the size of the mapping model, we first extracted words in the target languages that are spontaneously generated (generally without alignment with the source) - typically determiners when translating from English to French. We kept the 100 most frequent such words and call them 0-gram meanings. Then we go trough 1-gram, 2-gram, ..., n-grams. For each source phrase $f_1 ... f_n$, we consider the target phrase as a bag of words, and we check the meanings of the covered $0$, ... $n-1$-grams and discard these meanings from the bag of words. If words remain after examining all of the sub-sequence, we consider these words as new meaning for the current phrase. This approach extends vocabulary to multi-word expresions. For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams, and 1-gram. However, {\tt once more=à nouveau} will need 2 additional meanings not covered in sub-sequences. Hence, we have multiple criterion to extract a vocabulary map through the maximal sequence (MS), the maximal frequency of the pair (MF), the maximum number of meaning (KM). The efficiency of a vocabulary map can be evaluated through the coverage of the predicted meanings  for a reference test set, the final translation quality and the average number of meaning per vocab, and the actual time spend in generator. 
+To reduce the size of the vocabulary for each batch, we started up from word alignment method presented in \cite{shi2017speeding}. This approach is essentially a 1-gram approach. However to increase the coverage of the selected meanings without increasing the size of the mapping model, we first extracted words in the target languages that are spontaneously generated (generally without alignment with the source) - typically determiners when translating from English to French. We kept the 100 most frequent such words and call them 0-gram meanings. Then we go trough 1-gram, 2-gram, ..., n-grams. For each source phrase $f_1 ... f_n$, we consider the target phrase as a bag of words, and we check the meanings of the covered $0$, ... $n-1$-grams and discard these meanings from the bag of words. If words remain after examining all of the sub-sequence, we consider these words as new meaning for the current phrase. This approach extends vocabulary to multi-word expresions. For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams, and 1-gram. However, {\tt once more=à nouveau} will need 2 additional meanings not covered in sub-sequences. Hence, we have multiple criterion to extract a vocabulary map through the maximal sequence (MS), the maximal frequency of the pair (MF), the maximum number of meaning (KM). The efficiency of a vocabulary map can be evaluated through the coverage of the predicted meanings  for a reference test set, the final translation quality and the average number of meaning per vocab, and the actual time spend in generator.
 We present in table \ref{table:ngram} multiple vocabulary maps with these different metrics and in table \ref{table:student} the impact of using such a vocabulary map on the presented systems. Compared to \cite{shi2017speeding}, our approach with multiple $n-gram$ length enables better match-rate than the 1-gram approach (saturating the coverage TC at 80\%).
- 
+
 \begin{table*}[]
 \centering
 \begin{tabular}{lcccccccc}
@@ -211,7 +211,7 @@ We present in table \ref{table:ngram} multiple vocabulary maps with these differ
 \subsection{Quantization}
 \label{quantize}
 % nothing specific but extensipon to AVX512
-We use 16-bit int quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance, supporting AVX512 SIMD instructions, we extended the approach to AVX2 and AVX512. 
+We use 16-bit int quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance, supporting AVX512 SIMD instructions, we extended the approach to AVX2 and AVX512.
 
 ***JS: GIVE SOME COMPARATIVE NUMBER***
 
