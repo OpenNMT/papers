@@ -68,7 +68,7 @@ For this purpose, we explored the following techniques:
 \item Changing the structure of the network by increasing the size of more efficient modules, reducing the size of the more costly, and replacing default gated units,
 \item Using C++ based decoder \textit{CTranslate}\footnote{\url{https://github.com/OpenNMT/CTranslate}},
 \item Reducing dynamically the runtime target vocabulary extending \cite{shi2017speeding} ideas,
-\item Quantizing parameters of the models as presented in \newcite{DBLP:journals/corr/Devlin17} or gemmlowp\footnote{\url{https://github.com/google/gemmlowp}}
+\item Quantizing parameters of the models as presented in \newcite{DBLP:journals/corr/Devlin17} or {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}
 \end{itemize}
 
 The complete training workflow is therefore based on the following steps:
@@ -211,7 +211,7 @@ We present in table \ref{table:ngram} multiple vocabulary maps with these differ
 \subsection{Quantization}
 \label{quantize}
 % nothing specific but extensipon to AVX512
-We use 16-bit int quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance, supporting AVX512 SIMD instructions, we extended the approach to AVX2 and AVX512. 
+We use 16-bit int quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance powered with Intel Skylake CPU - we extended the proposed approach to SIMD AVX512 instruction set. 
 
 ***JS: GIVE SOME COMPARATIVE NUMBER***
 
@@ -221,11 +221,11 @@ We use 16-bit int quantization method proposed in \newcite{DBLP:journals/corr/De
 For BPE preprocessing, we try using 64K merges which can generate much shorter sentences.
 The average sentence length for 32K BPE is about 29.1 and for 64K BPE, it is about 27.7 tokens.
 
-***JS: give potential of additional speed improvement***
+Assuming the same efficiency in the vocabulary mapping, increasing the size of the vocabulary could therefore have gain about 5\% additional speed-up just by the reduction of the sentence length.
 
 \subsubsection{8-bit quantization}
 
-*** Show numbers comparing int8 and int16 ***
+To reduce further the system size, we also considered use of {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}. {\tt gemmlowp} is a library allowing quantization to unsigned 8 bits integer through dynamic offset/multiplier/shift parameters. Like our implementation of 16-bit quantization, the low precision is only for storing the parameters, the dot product is using larger register for accumulating intermediate result of the operation. {\tt gemmlowp} usage is for embedded application where speed but also power usage is critical. The idea was tempting, but it was not clear if such quantization schema could actually outperform quantization using SIMD extended instruction set on modern processors. We ran  comparative tests using AVX2 instructions set and found out that for multiplications of large matrixes $(20,1024) * (1024,512)$ - optimized INT16 implementation was 3 times faster than  {\tt gemmlowp} UINT8 implementation. Main reason being that AVX2 (and AVX512 twice faster) have a very powerful multiply and add instructions\footnote{{\tt \_mm256\_madd\_epi16} and {\tt \_mm512\_madd\_epi16}} allowing to perform in one single cycle dot product of 32 INT16 vector and pair accumulation in a 16 INT32 vector.
 
 % FC
 % Justin small embedding
