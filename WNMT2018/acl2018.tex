@@ -222,19 +222,15 @@ We present in table \ref{table:ngram} several vocabulary maps with these differe
 We use 16-bit signed integer quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance, supporting AVX512 SIMD instructions, we extended the approach to AVX2 and AVX512. Switching from SSE4 to AVX2, then from AVX2 to AVX512 instructions set gave additional speed boost of respectively $+12\%$ and $+6\%$.
 
 \subsection{Further potential optimizations and negative results}
-
-\subsubsection{Increasing vocabulary size to decrease the sentence length}
+\begin{itemize}
+\item \underline{Increasing vocabulary size to decrease the sentence length:}
 For BPE preprocessing, we try using 64K merges which can generate much shorter sentences.
-The average sentence length for 32K BPE is about 29.1 and for 64K BPE, it is about 27.7 tokens.
+The average sentence length for 32K BPE is about 29.1 and for 64K BPE, it is about 27.7 tokens. Assuming the same efficiency in the vocabulary mapping, increasing the size of the vocabulary could therefore have gain about 5\% additional speed-up just by the reduction of the sentence length.
 
-Assuming the same efficiency in the vocabulary mapping, increasing the size of the vocabulary could therefore have gain about 5\% additional speed-up just by the reduction of the sentence length.
-
-\subsubsection{8-bit quantization}
-
+\item \underline{8-bit quantization:}
 To reduce further the system size, we also considered use of {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}. {\tt gemmlowp} is a library allowing quantization to unsigned 8 bits integer through dynamic offset/multiplier/shift parameters. Like our implementation of 16-bit quantization, the low precision is only for storing the parameters, the dot product is using larger register for accumulating intermediate result of the operation. {\tt gemmlowp} usage is for embedded application where speed but also power usage is critical. The idea was tempting, but it was not clear if such quantization schema could actually outperform quantization using SIMD extended instruction set on modern processors. We ran  comparative tests using AVX2 instructions set and found out that for multiplications of large matrixes $(20,1024) * (1024,512)$ - optimized INT16 implementation was about 3 times faster than  {\tt gemmlowp} UINT8 implementation\footnote{On Intel(R) Core(TM) i7-6850K CPU @ 3.60GHz}. Main reason being that AVX2 (and AVX512 twice faster) have a very powerful multiply and add instructions\footnote{{\tt \_mm256\_madd\_epi16} and {\tt \_mm512\_madd\_epi16}} allowing to perform in one single cycle the dot product of vectors 32*INT16 and at the same time, the pair accumulation in a vector 16*INT32.
 
-\subsubsection{Other architecture}
-
+\item\underline{Other architecture:}
 In the same spirit of reducing the decoder layer, \newcite{DBLP:journals/corr/Devlin17} introduces an hybrid decoder with only one RNN attentional layer followed by fully connected layers with residual connections. The author reports reaching same quality than a multiple layers RNN with attention. We tried several variants around this idea but could not reproduce the same results.
 
 We also tried to reduce the width of the RNN more, but impact on quality was too important.
@@ -244,7 +240,7 @@ We also tried to reduce the width of the RNN more, but impact on quality was too
 % fatter encoder did not bring
 % narrower rnn 768 did not reach same level
 % BPE increase - addiotnal potential gain - diff of target sentence length
-
+\end{itemize}
 \begin{table*}[]
 \centering
 \begin{tabular}{lcccccc}
