@@ -299,15 +299,20 @@ As shown in Figure \ref{fig:beam_batch_bleu}, for a fixed batch size, when we in
 While for beam size 3, 4 and 5, there is no significant difference in accuracy which is consistent with previous findings on distilled system.
 Interestingly, for a fixed beam size, we notice also a slight improvement of accuracy when increasing the batch size as a side-effect of the dynamic vocabulary mapping and showing that some additional optimizations could be obtained on vocabulary mapping selection.
 
-\input{beam_batch_newstest2014.tex}
+\begin{figure}
+\includegraphics[width=\linewidth]{beambatch.png}
+\caption{Evaluations on different beam size and batch size}
+\label{fig:beam_batch_bleu}
+\end{figure}
+%\input{beam_batch_newstest2014.tex}
 
-At the same time, the decoding cost is increasing when larger beam and batch size are setting (Figure \ref{fig:beam_batch_cpu}).
+At the same time, the decoding cost is increasing when larger beam and batch size are setting (Figure \ref{fig:beam_batch_bleu}).
 For beam size 1 (in blue), we process more sentences inside each batch and the CPU cost reduces along the increasing of batch size.
 While for the others, larger beam size and larger batch size both cost more computational effort.
 
 As a result, we choose beam 2 and batch 2, balancing the performance and computation cost.
 
-\input{beam_batch_newstest2014_cputime.tex}
+%\input{beam_batch_newstest2014_cputime.tex}
 
 \section{Docker size}
 We did not focus on docker image size during the preparation of the submission, and our fastest system docker is 200M for effective 75Mb size for the model and less than 15Mb for additional code and resources. Post-submission, we looked at reducing this 100Mb overhead coming from operating system and found that easy optimizations could be applied - for instance like remove useless dependencies like Python. Without huge effort - we managed to reduced this overhead to 70Mb and it is probably easy to reduce even more.
