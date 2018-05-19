@@ -268,31 +268,29 @@ sys-cpu2-f          & Y                                                         
 In this section, we show our internal evaluation results.
 We train two NMT systems based on the synthetic training data with \textit{OpenNMT}, a LuaTorch version implementation on sequence to sequence MT. Table \ref{table:config} lists the different configurations for these two systems.
 
-For system cpu1, we use a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
+For system {\tt LSTM-opt-2}, we use a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
 We use a word embedding size of 512 and set the dropout to 0.3.
 The batch size is set to 64 and the default learning rate is 1.0 with sgd optimization.
-For system cpu2, we train with a smaller network, with GRU layers, 512 hidden size.
+For system {\tt GRU-opt-2}, we train with a smaller network, with GRU layers, 512 hidden size.
 On the encoder side, we have 2 layers, while on the decoder side, only 1 layer is set.
 We use adam optimization with the starting learning rate 0.0002.
 Both systems are trained up to 10 epochs.
 
 Evaluations are shown in Table \ref{table:student}.
-For system cpu1, the cpu time during decoding improves from 1694.16 seconds to 621.17 seconds (saving 63.3\%), with a loss of only 0.19 BLEU score, on newstest2014.
-For system cpu2, the trends are similar.
+For system {\tt LSTM-opt-2}, the cpu time during decoding improves from 1694.16 seconds to 621.17 seconds (saving 63.3\%), with a loss of only 0.19 BLEU score, on newstest2014.
+For system {\tt GRU-opt-2}, the trends are similar.
 80.3\% cpu time is saving, while only 0.13 BLEU score is lost.
 
-We also compare the different influence with the options quantize runtime, vmap and quantize model, on system cpu2.
+We also compare the different influence with the options quantize runtime, vmap and quantize model, on system {\tt GRU-opt-2}.
 The option quantize runtime and vmap both can save the decoding time about 50\%.
 The option quantize model functions well on halving the model size.
 
 \subsection{Beam size and Batch size}
 
-We further make a full testing on the decoding performance (BLEU) and CPU time of different beam size and batch size on system cpu2-f.
+We further make a full testing on the decoding performance (BLEU) and CPU time of different beam size and batch size on system {\tt GRU-opt-2}.
 As shown in Figure \ref{fig:beam_batch_bleu}, for a fixed batch size, when we increase the beam size from 1 to 3, the accuracy increases as well.
-While for beam size 3, 4 and 5, there is no significant difference in accuracy.
-For a fixed beam size, when we increase the batch size, the accuracy also increases.
-The reason is that for this final version, we use phrase table to optimize the candidate target vocabulary in each batch.
-When the batch size is larger, more candidates are selected and more accuracy can be achieved.
+While for beam size 3, 4 and 5, there is no significant difference in accuracy which is consistent with previous findings on distilled system.
+Interestingly, for a fixed beam size, we notice also a slight improvement of accuracy when increasing the batch size as a side-effect of the dynamic vocabulary mapping and showing that some additional optimizations could be obtained on vocabulary mapping selection.
 
 \input{beam_batch_newstest2014.tex}
 
