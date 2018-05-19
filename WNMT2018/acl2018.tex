@@ -25,6 +25,8 @@
 \usepackage{array,ragged2e}
 \usepackage{textcomp}
 \usepackage{pgfplotstable}
+\usepackage{enumitem}
+\setlist{itemsep=0pt}
 
 %\aclfinalcopy % Uncomment this line for the final submission
 %\def\aclpaperid{***} %  Enter the acl Paper ID here
@@ -87,7 +89,7 @@ The complete training workflow is therefore based on the following steps:
 \label{fig:pareto}
 \end{figure}
 
-By combining all these techniques, we generated a large number of models and picked two of them presenting interesting trade-off between speed and quality and on the frontier of the Pareto curve (see Figure \ref{fig:pareto}). Our first system {\tt LSTM-opt-2} is a simple 2-layer LSTM network is only -2.19 points behind reference transformer model, with a speed-up of \textcolor{red}{x\~10}. Our second system achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind the reference model) but  with an additional decoding speed-up of \textcolor{red}{x\~10} at about 1000 words/sec on the evaluation hardware.
+By combining all these techniques, we generated a large number of models and picked two of them presenting interesting trade-off between speed and quality and on the frontier of the Pareto curve (see Figure \ref{fig:pareto}). Our first system {\tt LSTM-opt-2} is a simple 2-layer LSTM network is only -2.19 points behind reference transformer model, with a speed-up of \textcolor{red}{x+10}. Our second system achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind the reference model) but  with an additional decoding speed-up of \textcolor{red}{x+10} at about 1000 words/sec on the evaluation hardware.
 
 Also, we show that distillation of transformer model outperforms training result of a strong RNN model - extending findings of \cite{DBLP:journals/corr/CregoS16} who reported that student systems could outperform their teacher for reference RNN-based model.
 
@@ -127,13 +129,7 @@ However, transformer networks still require a large number of parameters and als
 As a result, the parallelizable training, the flexibility in modeling both long-range/local
 dependencies, and the state-of-the-art performance make this architecture suitable to act as the teacher system.
 
-We used \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}} to train two transformer based systems: base and large.
-The large system  use a larger fully connected network $d_{ff}=4096$ compared to base $d_{ff}=2048$.
-We used 4 GPUs for the training for 350K iterations with a batch size of 8192.
-The learning rate is set to 2.0 and warmup steps 8000.
-We average the last 8 checkpoints to get the final model.
-Evaluations on these two systems on the testsets are presented in Table \ref{table:transformer}, our baseline system outperforms in particular the provided sockeye model with +0.37 BLEU on newstest 2014.
-
+We used \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}} to train two transformer based systems: base and large described in table \ref{table:transformer} with their evaluation. For both, the learning rate is set to 2.0 and warmup steps 8000, we average the last 8 checkpoints to get the final model. Our baseline system outperforms in particular the provided baseline sockeye model with +0.37 BLEU on newstest 2014.
 
 \subsection{Distillation}
 \label{distill}
@@ -142,7 +138,7 @@ We follow the method described in \newcite{distillation}. Firstly, we build the 
 Then, we use this simplified corpus (original source and newly generated target) to train a student system, in our case a sequence-to-sequence models similar to \newcite{bahdanau2014neural}.
 The student system can be assigned with smaller network size and this process is called distillation.
 
-According to \newcite{DBLP:journals/corr/CregoS16}, distillation process not only improves throughput of the models and reduce their size, but can also improve the translation quality if the width of the network is not reduced too much. Also, these distilled systems have the interesting feature that they performed almost identically for beam 2 or beam 5 beam search. The interpretation for these facts being that the teacher produced simplified translations. That is, translations that are usually closer, in terms of syntactic structure and even word choices, to the input sentences than reference translations. Thus the student model better manage to learn and generalize this simplified knowledge. One major question here was to find out whether distillation from an transformer model could benefit a student RNN model. We show in table  \textcolor{red}{XX} that this seems to be the case, since the best distilled system outperforms a larger model trained with the original data.
+According to \newcite{DBLP:journals/corr/CregoS16}, distillation process not only improves throughput of the models and reduce their size, but can also improve the translation quality if the width of the network is not reduced too much. Also, these distilled systems have the interesting feature that they performed almost identically for beam 2 or beam 5 beam search. The interpretation for these facts being that the teacher produced simplified translations. That is, translations that are usually closer, in terms of syntactic structure and even word choices, to the input sentences than reference translations. Thus the student model better manage to learn and generalize this simplified knowledge. One major question here was to find out whether distillation from an transformer model could benefit a student RNN model. We proved it was the case, since the best distilled system outperforms a larger model trained with the original data.
 
 \subsection{Sequence to Sequence}
 \label{seq2seq}
