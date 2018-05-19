@@ -157,9 +157,11 @@ Profiling of the throughput of such system is presented in Figure \ref{fig:decod
 \item Transversally to the different component of the network, the most costly module is the Linear module cumulating more 95\% of the complete processing time
 \end{itemize}
 
-For these observations, it is obvious that we need to optimize the efficiency of Linear operation (basic matrix multiplication) and/or reduce their number. On the model architecture, we tried different model combination based on a "fat encoder, thin decoder" spirit: ie. increasing if necessary the number of operations in the encoder part if we can in parallel reduce the number of operations in the decoder.
+For these observations, it is obvious that we needed to optimize the efficiency of Linear operation (basic matrix multiplication), reduce their number and have a special focus on the generation layer. It was also interesting to note that focus on any other operator was useless.
 
-Also, we tried to substitute LSTM cell with GRU cells. Indeed LSTM cells have 4 gates while GRU cells only 3, so potentially leading to a 25\% improvement in speed. We are not aware of any comprehensive study comparing relative efficiency of GRU vs LSTM. Our findings show that almost similar performance can be reached but require not to use a naive SGD optimization generally sufficient for LSTM-RNN trainings.
+On the model architecture, we tried different model combination based on a "fat encoder, thin decoder" spirit: ie. increasing if necessary the number of operations in the encoder part if we can in parallel reduce the number of operations in the decoder.
+
+Also, we tried to substitute LSTM cell with GRU cells. Indeed LSTM cells have 4 gates while GRU cells only 3, so potentially leading to a 25\% improvement in speed. We are not aware of any comprehensive study comparing relative efficiency of GRU vs LSTM. Our findings show that almost similar performance can be reached (see figure XX). However, GRU requires more care in optimization method while a naive SGD optimization is generally sufficient for LSTM-RNN trainings.
 
 \section{Decoding optimization}
 
