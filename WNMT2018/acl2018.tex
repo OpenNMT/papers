@@ -1,0 +1,328 @@
+%
+% File acl2018.tex
+%
+%% Based on the style files for ACL-2017, with some changes, which were, in turn,
+%% Based on the style files for ACL-2015, with some improvements
+%%  taken from the NAACL-2016 style
+%% Based on the style files for ACL-2014, which were, in turn,
+%% based on ACL-2013, ACL-2012, ACL-2011, ACL-2010, ACL-IJCNLP-2009,
+%% EACL-2009, IJCNLP-2008...
+%% Based on the style files for EACL 2006 by
+%%e.agirre@ehu.es or Sergi.Balari@uab.es
+%% and that of ACL 08 by Joakim Nivre and Noah Smith
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[hyperref]{acl2018}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{array,ragged2e}
+\usepackage{textcomp}
+\usepackage{pgfplotstable}
+
+%\aclfinalcopy % Uncomment this line for the final submission
+%\def\aclpaperid{***} %  Enter the acl Paper ID here
+
+%\setlength\titlebox{5cm}
+% You can expand the titlebox if you need extra space
+% to show all the authors. Please do not make the titlebox
+% smaller than 5cm (the original size); we will check this
+% in the camera-ready version and ask you to change it back.
+
+\newcommand\BibTeX{B{\sc ib}\TeX}
+
+\title{Fat Encoder, Thin Decoder \protect\\ OpenNMT System Description for WNMT 2018}
+
+\author{First Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain} \\\And
+  Second Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain} \\}
+
+\date{}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+In this paper, we present OpenNMT sequence to sequence neural machine translation (NMT) system for the WNMT 2018 evaluation optimized for CPU inference. This work led to development of new features that have been integrated to OpenNMT and available to the community.
+
+\end{abstract}
+
+\section{Introduction}
+In this paper, we describe the systems we built and selected for WNMT 2018 (The 2nd Workshop on Neural Machine Translation and Generation\footnote{\url{https://sites.google.com/site/wnmt18/shared-task}}). Our specific interest was to explore the different techniques for training and optimizing CPU models with high throughput while keeping high accuracy. Even though we did not put real focus on memory footprint, we applied basic optimization techniques to reduce the final size of our models (delivered as fully functional dockers).
+
+For this purpose, we explored the following techniques:
+\begin{itemize}
+\item Model distillation as introduced by \newcite{distillation} to transfer knowledge from a strong baseline neural network (the teacher) to a smaller network (the student); we were in particular interested to explore the possibility of distilling knowledge from a transformer model \cite{vaswani2017attention} to a light-weight RNN model,
+\item Changing the structure of the network by increasing the size of more efficient modules, reducing the size of the more costly, and replacing default gated units,
+\item Using C++ based decoder \textit{CTranslate}\footnote{\url{https://github.com/OpenNMT/CTranslate}},
+\item Reducing dynamically the runtime target vocabulary extending \cite{shi2017speeding} ideas,
+\item Quantizing parameters of the models as presented in \newcite{DBLP:journals/corr/Devlin17} or gemmlowp\footnote{\url{https://github.com/google/gemmlowp}}
+\end{itemize}
+
+The complete training workflow is therefore based on the following steps:
+\begin{itemize}
+\item Preparation of data and sub-tokenization model - described in section \ref{data}.
+\item Training of strong a Teacher transformer model, and translation of the full dataset with this model - described in section \ref{transformer}.
+\item Training of student model on translated data - described in section \ref{distill} and \ref{seq2seq}.
+\item Quantizing the generated model - described in section \ref{quantize}.
+\end{itemize}
+
+By combining all these techniques, we generated a large number of models and picked two of them presenting interesting trade-off between speed and quality. Our first system {\tt LSTM-opt-2} is a simple 2-layer LSTM network is only -2.19 points behind reference transformer model, with a speed-up of \textcolor{red}{x~10}. Our second system achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind the reference model) but  with an additional decoding speed-up of \textcolor{red}{x~10} at about 1000 words/sec on the evaluation hardware.
+
+Also, we show that distillation of transformer model outperforms training result of a strong RNN model - extending findings of \cite{DBLP:journals/corr/CregoS16} who reported that student systems could outperform their teacher for reference RNN-based model.
+
+Finally, we also report several other negative experiments that produced systems inside of the pareto convex border. For instance, we compared using 8-bit quantization to 16-bit quantization.
+
+Beyond the presented systems, this paper brings the following contributions: a/ we prove that distillation from a transformer neural network to a simple rnn neural network is efficient, b/ we compare quantitatively different quantizations, c/ we improve algorithm to select dynamically target vocabulary for a given batch.
+
+\begin{table*}[]
+\centering
+\begin{tabular}{lccccrr}
+\hline
+                    & \multicolumn{1}{l}{\(\displaystyle N \)} & \multicolumn{1}{l}{\(\displaystyle d_{model} \)} & \multicolumn{1}{l}{\(\displaystyle d_{ff} \)} & \multicolumn{1}{l}{\(\displaystyle h \)} & \multicolumn{1}{l}{newstest2014} & \multicolumn{1}{l}{newstest2015} \\ \hline
+Transformer (base)  & 6                     & 512                        & 2048                  & 8                        & 27.30                            & 29.36                            \\ \hline
+Transformer (large) & 6                     & 512                        & 4096                  & 8                        & 27.96                            & 29.95                            \\ \hline
+\end{tabular}
+\caption{Evaluation on transformer based teacher system}
+\label{table:transformer}
+\end{table*}
+
+\section{Training}
+
+\subsection{Data}
+\label{data}
+
+We use constrained data set provided by WNMT 2018, which is a preprocessed and tokenized version of WMT 2014 on English-German translation\footnote{\url{https://nlp.stanford.edu/projects/nmt/}}. The training data contains about 4.5M sentence pairs. We use newstest2013 as the validation set and newstest2014 and newstest2015 as the testing sets. Before training, we trained a 32K joint byte-pair encoding (BPE) to preprocess the data \cite{sennrich2015neural}. Hence, the generated subword vocabulary is less than 40K word pieces. And we limit the sentence length to 100 based on BPE preprocessing in both source and target side (excluding only $0.31\%$ of the training corpus). After decoding, we remove the BPE joiners and evaluate the tokenized output with multi-bleu.perl\footnote{\url{https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl}}.
+
+\subsection{Transformer}
+\label{transformer}
+% teacher system
+We train a transformer based system \cite{vaswani2017attention} as our teacher system.
+Compared with RNN/CNN models, transformer based model does not rely on recurrent or convolution network.
+It directly models the representations of each sentence with self-attention mechanism.
+Hence much longer information in the sentences can be learned especially important for language pairs like English-German and it currently achieves state-of-art results for machine translation \cite{DBLP:journals/corr/abs-1803-02155}
+
+Another advantage for transformer based system is that the training process can be parallelized easily.
+However, transformer networks still require a large number of parameters and also large memory to achieve the best performance.
+As a result, the parallelizable training, the flexibility in modeling both long-range/local
+dependencies, and the state-of-the-art performance make this architecture suitable to act as the teacher system.
+
+We used \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}} to train two transformer based systems: base and large.
+The large system  use a larger fully connected network $d_{ff}=4096$ compared to base $d_{ff}=2048$.
+We used 4 GPUs for the training for 350K iterations with a batch size of 8192.
+The learning rate is set to 2.0 and warmup steps 8000.
+We average the last 8 checkpoints to get the final model.
+Evaluations on these two systems on the testsets are presented in Table \ref{table:transformer}, our baseline system outperforms in particular the provided sockeye model with +0.37 BLEU points.
+
+
+\subsection{Distillation}
+\label{distill}
+
+We follow the method described in \newcite{distillation}. Firstly, we build the full transformer based MT system \cite{vaswani2017attention} as the teacher system. Secondly, we use the teacher system to translate all the source sentences to generate a simplified target sentences set.
+Then, we use this simplified corpus (original source and newly generated target) to train a student system, in our case a sequence-to-sequence models similar to \newcite{bahdanau2014neural}.
+The student system can be assigned with smaller network size and this process is called distillation.
+
+According to \newcite{DBLP:journals/corr/CregoS16}, distillation process not only improves throughput of the models and reduce their size, but can also improve the translation quality if in particular the width of the network is not reduced too much. Also, these distilled systems present have the interesting feature that they performed almost identically for beam 2 or beam 5 beam search. The interpretation for these facts being that the teacher produced simplified translations. That is, translations that are usually closer, in terms of syntactic structure and even word choices, to the input sentences than reference translations. Thus the student model better manage to learn and generalize this simplified knowledge. One major question here was to find out whether distillation from an transformer model could benefit a student rnn model. We show in table  \textcolor{red}{XX} that this seems to be the case, since the best distilled system outperforms a larger model trained with the original data.
+
+\subsection{Sequence to Sequence}
+\label{seq2seq}
+
+Our baseline NMT system follows the architecture presented in ~\newcite{luong-pham-manning:2015:EMNLP}. It is implemented as an encoder-decoder network with multiple layers of a RNN with Long Short-Term Memory hidden units ~\cite{DBLP:journals/corr/ZarembaSV14}.
+
+The encoder is a bidirectional neural network that reads an input sequence $s = (s_1,...,s_J)$ and calculates a forward sequence of hidden states $(\overrightarrow{h_1}, ..., \overrightarrow{h_J})$, and a backward sequence $(\overleftarrow{h_1},..., \overleftarrow{h_J})$. The decoder is a RNN that predicts a target sequence $t = (t_1, ..., t_I)$, being $J$ and $I$ respectively the source and target sentence lengths. Each word $t_i$ is predicted based on a recurrent hidden state $h_i$, the previously predicted word $t_{i-1}$, and a context vector $c_i$. We employ the attentional architecture from ~\newcite{luong-pham-manning:2015:EMNLP} available on \textit{OpenNMT}\footnote{\url{https://github.com/OpenNMT/OpenNMT}}.
+%Additional details are given in \cite{DBLP:journals/corr/CregoKKRYSABCDE16}.
+
+\begin{figure}
+\includegraphics[width=\linewidth]{decoder.pdf}
+\includegraphics[width=\linewidth]{decoder_linear.pdf}
+\caption{Profiling of the throughput during inference of newstest2014. Each line is a different system. The {\tt LSTM-1,2,3} are baseline systems with respective beam size of 1, 2, 3. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the presented systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
+\label{fig:decoding_cost}
+\end{figure}
+
+Profiling of the throughput of such system is presented in Figure \ref{fig:decoding_cost}. From this analysis we gather the following facts:
+
+\begin{itemize}
+\item The most costly part of the inference is the generator, that is the final Linear layer feeding Softmax with weights corresponding to each single vocab of the target language. This is by far the largest matrix multiplication of the system: $(B,W) * (W,V)$ (with $B$ being the batch*beam size, $W$ the width of the network, and $V$ the size of the vocabulary).
+\item Although the cost of the encoder for beam size 1 is higher than the decoder, the decoder cost - including generator and attention model - grows linearly with the beam size.
+\item Transversally to the different component of the network, the most costly module is the Linear module cumulating more 95\% of the complete processing time
+\end{itemize}
+
+For these observations, it is obvious that we need to optimize the efficiency of Linear operation (basic matrix multiplication) and/or reduce their number. On the model architecture, we tried different model combination based on a "fat encoder, thin decoder" spirit: ie. increasing if necessary the number of operations in the encoder part if we can in parallel reduce the number of operations in the decoder.
+
+Also, we tried to substitute LSTM cell with GRU cells. Indeed LSTM cells have 4 gates while GRU cells only 3, so potentially leading to a 25\% improvement in speed. We are not aware of any comprehensive study comparing relative efficiency of GRU vs LSTM. Our findings show that almost similar performance can be reached but require not to use a naive SGD optimization generally sufficient for LSTM-RNN trainings.
+
+\section{Decoding optimization}
+
+%introduction is analysis of profiling
+%=> fat encoder, thin decoder
+
+% model is Microsoft paper
+
+% no FC -> no convergence?
+% full quantized graph
+% sigmoid quantizatgio
+
+\subsection{C++ Decoder: CTranslate}
+
+CTranslate is an open source inference engine for OpenNMT models (designed for LuaTorch version) that uses raw C++ with minimal dependencies. The project can load trained models, read the computation graph, and run inference using the popular Eigen library.
+
+CTranslate's goal is to offer a lightweight and embeddable solution for executing models and to support advanced CPU optimization such as quantization and parallel translation. Without these optimization, it still benefits from Eigen efficiency and is about 20\% faster than an Torch application using Intel MKL. Additionally, the use of C++ over a garbage-collected language ensures a predictable and reduced memory usage.
+
+
+\subsection{Reduction of vocabulary size}
+% find reference paper
+% our contribution to extend n-gram level
+To reduce the size of the vocabulary for each batch, we started up from word alignment method presented in \cite{shi2017speeding}. This approach is essentially a 1-gram approach. However to increase the coverage of the selected meanings without increasing the size of the mapping model, we first extracted words in the target languages that are spontaneously generated (generally without alignment with the source) - typically determiners when translating from English to French. We kept the 100 most frequent such words and call them 0-gram meanings. Then we go trough 1-gram, 2-gram, ..., n-grams. For each source phrase $f_1 ... f_n$, we consider the target phrase as a bag of words, and we check the meanings of the covered $0$, ... $n-1$-grams and discard these meanings from the bag of words. If words remain after examining all of the sub-sequence, we consider these words as new meaning for the current phrase. This approach extends vocabulary to multi-word expresions. For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams, and 1-gram. However, {\tt once more=à nouveau} will need 2 additional meanings not covered in sub-sequences. Hence, we have multiple criterion to extract a vocabulary map through the maximal sequence (MS), the maximal frequency of the pair (MF), the maximum number of meaning (KM). The efficiency of a vocabulary map can be evaluated through the coverage of the predicted meanings  for a reference test set, the final translation quality and the average number of meaning per vocab, and the actual time spend in generator. 
+We present in table \ref{table:ngram} multiple vocabulary maps with these different metrics and in table \ref{table:student} the impact of using such a vocabulary map on the presented systems. Compared to \cite{shi2017speeding}, our approach with multiple $n-gram$ length enables better match-rate than the 1-gram approach (saturating the coverage TC at 80\%).
+ 
+\begin{table*}[]
+\centering
+\begin{tabular}{lcccccccc}
+\hline
+\multirow{2}{*}{MS} & \multirow{2}{*}{MF} & \multirow{2}{*}{KM} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}vocab\\ per token\end{tabular}} & \multirow{2}{*}{match} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Linear\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}SoftMax\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{Memory} & \multirow{2}{*}{BLEU} \\
+\\ \hline
+ &  &  &  &  & 143.86 & 4.97 & 239024 & 23.24 \\ \hline
+1 & 1 & 50 & 2 & 30\% & 3.78 & 0.11 & 295532 & 21.98 \\ \hline
+2 & 1 & 100 & 24 & 86\% & 5.97 & 0.16 & 901864 & 23.13 \\ \hline
+2 & 1 & 150 & 25 & 86\% & 6.63 & 0.18 & 918316 & 23.16 \\ \hline
+2 & 1 & 50 & 22 & 85\% & 5.34 & 0.14 & 846292 & 23.09 \\ \hline
+2 & 2 & 100 & 22 & 85\% & 4.08 & 0.11 & 324348 & 23.02 \\ \hline
+2 & 2 & 150 & 22 & 85\% & 3.95 & 0.11 & 324364 & 23.02 \\ \hline
+2 & 2 & 50 & 20 & 84\% & 3.95 & 0.11 & 322744 & 23.03 \\ \hline
+3 & 1 & 50 & 30 & 90\% & 5.23 & 0.15 & 1127752 & 23.16 \\ \hline
+
+\end{tabular}
+\caption{Evaluations of n-gram vocabulary mappings on Newstest2014}
+\label{table:ngram}
+\end{table*}
+
+\subsection{Quantization}
+\label{quantize}
+% nothing specific but extensipon to AVX512
+We use 16-bit int quantization method proposed in \newcite{DBLP:journals/corr/Devlin17} - however to better optimize speed on AWS M5 instance, supporting AVX512 SIMD instructions, we extended the approach to AVX2 and AVX512. 
+
+***JS: GIVE SOME COMPARATIVE NUMBER***
+
+\subsection{Further potential optimizations and negative results}
+
+\subsubsection{Increasing vocabulary size to decrease the sentence length}
+For BPE preprocessing, we try using 64K merges which can generate much shorter sentences.
+The average sentence length for 32K BPE is about 29.1 and for 64K BPE, it is about 27.7 tokens.
+
+***JS: give potential of additional speed improvement***
+
+\subsubsection{8-bit quantization}
+
+*** Show numbers comparing int8 and int16 ***
+
+% FC
+% Justin small embedding
+% dense bridge
+% fatter encoder did not bring
+% narrower rnn 768 did not reach same level
+% BPE increase - addiotnal potential gain - diff of target sentence length
+
+\begin{table*}[]
+\centering
+\begin{tabular}{lcccccc}
+\hline
+     & \multicolumn{1}{l}{RNN type} & \multicolumn{1}{l}{RNN size} & \multicolumn{1}{l}{encoder layers} & \multicolumn{1}{l}{decoder layers} & \multicolumn{1}{l}{embedding size} & \multicolumn{1}{l}{optim} \\ \hline
+sys-cpu1 & b-LSTM                         & 1024                         & 2                                  & 2                                  & 512                                & sgd                       \\ \hline
+sys-cpu2 & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\ \hline
+\end{tabular}
+\caption{Configurations for the two student systems}
+\label{table:config}
+\end{table*}
+
+\begin{table*}[]
+\centering
+\begin{tabular}{lcccccccc}
+\hline
+\multirow{2}{*}{} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ runtime\end{tabular}} & \multirow{2}{*}{vmap} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ model\end{tabular}} & \multicolumn{2}{c}{newstest2014} & \multicolumn{2}{c}{newstest2015} & \multirow{2}{*}{model size} \\ \cline{5-8}
+                  &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \hline
+sys-cpu1          & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\ \hline
+sys-cpu1-f          & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\ \hline
+sys-cpu2          & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\ \hline
+sys-cpu2          & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\ \hline
+sys-cpu2          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\ \hline
+sys-cpu2-f          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \hline
+\end{tabular}
+\caption{Evaluations on two student systems (the suffix "-f" means it is the final submission)}
+\label{table:student}
+\end{table*}
+
+\section{Evaluations}
+
+In this section, we show our internal evaluation results.
+We train two NMT systems based on the synthetic training data with \textit{OpenNMT}, a LuaTorch version implementation on sequence to sequence MT. Table \ref{table:config} lists the different configurations for these two systems.
+
+For system cpu1, we use a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
+We use a word embedding size of 512 and set the dropout to 0.3.
+The batch size is set to 64 and the default learning rate is 1.0 with sgd optimization.
+For system cpu2, we train with a smaller network, with GRU layers, 512 hidden size.
+On the encoder side, we have 2 layers, while on the decoder side, only 1 layer is set.
+We use adam optimization with the starting learning rate 0.0002.
+Both systems are trained up to 10 epochs.
+
+Evaluations are shown in Table \ref{table:student}.
+For system cpu1, the cpu time during decoding improves from 1694.16 seconds to 621.17 seconds (saving 63.3\%), with a loss of only 0.19 BLEU score, on newstest2014.
+For system cpu2, the trends are similar.
+80.3\% cpu time is saving, while only 0.13 BLEU score is lost.
+
+We also compare the different influence with the options quantize runtime, vmap and quantize model, on system cpu2.
+The option quantize runtime and vmap both can save the decoding time about 50\%.
+The option quantize model functions well on halving the model size.
+
+\subsection{Beam size and Batch size}
+
+We further make a full testing on the decoding performance (BLEU) and CPU time of different beam size and batch size on system cpu2-f.
+As shown in Figure \ref{fig:beam_batch_bleu}, for a fixed batch size, when we increase the beam size from 1 to 3, the accuracy increases as well.
+While for beam size 3, 4 and 5, there is no significant difference in accuracy.
+For a fixed beam size, when we increase the batch size, the accuracy also increases.
+The reason is that for this final version, we use phrase table to optimize the candidate target vocabulary in each batch.
+When the batch size is larger, more candidates are selected and more accuracy can be achieved.
+
+\input{beam_batch_newstest2014.tex}
+
+At the same time, the decoding cost is increasing when larger beam and batch size are setting (Figure \ref{fig:beam_batch_cpu}).
+For beam size 1 (in blue), we process more sentences inside each batch and the CPU cost reduces along the increasing of batch size.
+While for the others, larger beam size and larger batch size both cost more computational effort.
+
+As a result, we choose beam 2 and batch 2, balancing the performance and computation cost.
+
+\input{beam_batch_newstest2014_cputime.tex}
+
+\section{Conclusion}
+
+% docker size => -50M
+We train a fat encoder, thin decoder sequence to sequence NMT system for WNMT 2018.
+Before training, we simplify the target sentences with a strong teacher system.
+
+We quantize the model parameters and reduce the target candidates during decoding => not full network quantizing.
+
+Our final system run fast with a small loss in the accuracy.
+
+%\section*{Acknowledgments}
+%
+%The acknowledgments should go immediately before the references.  Do not number the acknowledgments section ({\em i.e.}, use \verb|\section*| instead of \verb|\section|). Do not include this section when submitting your paper for review.
+
+% include your own bib file like this:
+%\bibliographystyle{acl}
+%\bibliography{acl2018}
+\bibliography{acl2018}
+\bibliographystyle{acl_natbib}
+
+\end{document}
+

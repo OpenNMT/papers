@@ -1,0 +1,33 @@
+\begin{figure}
+\pgfplotstableread{ % data 
+Label	Linear	MM	Sotfmax	Sigmoid_Tanh	Others
+LSTM-1	0.98	0.01	0	0	0
+LSTM-2	0.97	0.01	0.01	0	0
+LSTM-5	0.95	0.02	0.02	0.01	0.01
+LSTM-opt-2	0.96	0.02	0	0.01	0.01
+GRU-opt-2	0.88	0.09	0.01	0.01	0.01
+}\testdata
+
+\begin{tikzpicture}
+\scalebox{0.8}{
+\begin{axis}[
+xbar stacked,   % Stacked horizontal bars
+xmin=0,         % Start x axis at 0
+ytick=data,     % Use as many tick labels as y coordinates
+legend pos=west,
+yticklabels from table={\testdata}{Label}  % Get the labels from the Label column of the \datatable
+]
+\addplot [fill=blue!80] table [x=Linear, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=orange!60] table [x=MM, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=pink!60] table [x=Sotfmax, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=yellow!60] table [x=Sigmoid_Tanh, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=red!60] table [x=Others, meta=Label,y expr=\coordindex] {\testdata};
+
+\legend{Linear,MM,Sotfmax,Sigmoid Tanh,Others}
+
+\end{axis}
+}
+\end{tikzpicture}
+\caption{Decoding cost}
+\label{fig:decoding_cost2}
+\end{figure}

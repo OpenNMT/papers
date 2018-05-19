@@ -1,0 +1,33 @@
+\begin{figure}
+\pgfplotstableread{ % data 
+Label	encoder	decoder	attention	generator	Beam_search
+LSTM-1	0.35	0.24	0.05	0.36	0.00
+LSTM-2	0.25	0.25	0.05	0.43	0.01
+LSTM-5	0.22	0.26	0.07	0.42	0.04
+LSTM-opt-2	0.43	0.41	0.09	0.06	0.01
+GRU-opt-2	0.4	0.2	0.16	0.19	0.05
+}\testdata
+
+\begin{tikzpicture}
+\scalebox{0.8}{
+\begin{axis}[
+xbar stacked,   % Stacked horizontal bars
+xmin=0,         % Start x axis at 0
+ytick=data,     % Use as many tick labels as y coordinates
+legend pos=outer north east,
+yticklabels from table={\testdata}{Label}  % Get the labels from the Label column of the \datatable
+]
+\addplot [fill=blue!80] table [x=encoder, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=orange!60] table [x=decoder, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=pink!60] table [x=attention, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=yellow!60] table [x=generator, meta=Label,y expr=\coordindex] {\testdata};
+\addplot [fill=red!60] table [x=Beam_search, meta=Label,y expr=\coordindex] {\testdata};
+
+\legend{encoder,decoder,attention,generator,beam search}
+
+\end{axis}
+}
+\end{tikzpicture}
+\caption{Decoding cost}
+\label{fig:decoding_cost}
+\end{figure}
