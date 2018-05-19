@@ -305,10 +305,14 @@ As a result, we choose beam 2 and batch 2, balancing the performance and computa
 
 \input{beam_batch_newstest2014_cputime.tex}
 
+\section{Docker size}
+We did not focus on docker image size during the preparation of the submission, and our fastest system docker is 200M for effective 75Mb size for the model and less than 15Mb for additional code and resources. Post-submission, we looked at reducing this 100Mb overhead coming from operating system and found that easy optimizations could be applied - for instance like remove useless dependencies like Python. Without huge effort - we managed to reduced this overhead to 70Mb and it is probably easy to reduce even more.
+
 \section{Conclusion}
 
 % docker size => -50M
 We train through distillation a fat encoder, thin decoder sequence to sequence NMT system for WNMT 2018 running one one single CPU. The models use quantization leading to both a size reduction and a speed gain. Several additional optimizations could have been applied, such as full graph quantization, augmentation of vocabulary size, more improvement on vocabulary mapping...
+
 
 We need to note that at this level of optimization, especially the use of quantization, makes the speed measurement very dependent on other process running on the same instance, especially due to the critical importance of the L3/L4-cache shared between the different cores. In particular, we observed that 4 parallel process using fastest model were only reaching a x3 speed boost. To go further on parallel decoding, one would need to implement synchronization points between parallel decoding to avoid waste of memory cache transfer.
  
