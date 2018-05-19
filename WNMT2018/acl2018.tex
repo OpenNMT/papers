@@ -89,7 +89,7 @@ The complete training workflow is therefore based on the following steps:
 \label{fig:pareto}
 \end{figure}
 
-By combining all these techniques, we generated a large number of models and picked two of them presenting interesting trade-off between speed and quality and on the frontier of the Pareto curve (see Figure \ref{fig:pareto}). Our first system {\tt LSTM-opt-2} is a simple 2-layer LSTM network is only -2.19 points behind reference transformer model, with a speed-up of \textcolor{red}{x+10}. Our second system achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind the reference model) but  with an additional decoding speed-up of \textcolor{red}{x+10} at about 1000 words/sec on the evaluation hardware.
+By combining all these techniques, we generated a large number of models and picked two of them presenting interesting trade-off between speed and quality and on the frontier of the Pareto curve (see Figure \ref{fig:pareto}). Our first system {\tt LSTM-opt-2} is a simple 2-layer LSTM network is only -2.19 points behind reference transformer model, with a speed-up of \textcolor{red}{94.5\%}. Our second system achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind the reference model) but  with an additional decoding speed-up of \textcolor{red}{83.9\%} at about 1000 words/sec on the evaluation hardware.
 
 Also, we show that distillation of transformer model outperforms training result of a strong RNN model - extending findings of \cite{DBLP:journals/corr/CregoS16} who reported that student systems could outperform their teacher for reference RNN-based model.
 
@@ -246,8 +246,8 @@ We also tried to reduce the width of the RNN more, but impact on quality was too
 \begin{tabular}{lcccccc}
 \hline
      & \multicolumn{1}{l}{RNN type} & \multicolumn{1}{l}{RNN size} & \multicolumn{1}{l}{encoder layers} & \multicolumn{1}{l}{decoder layers} & \multicolumn{1}{l}{embedding size} & \multicolumn{1}{l}{optim} \\ \hline
-sys-cpu1 & b-LSTM                         & 1024                         & 2                                  & 2                                  & 512                                & sgd                       \\ \hline
-sys-cpu2 & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\ \hline
+LSTM & b-LSTM                         & 1024                         & 2                                  & 2                                  & 512                                & sgd                       \\ \hline
+GRU & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\ \hline
 \end{tabular}
 \caption{Configurations for the two student systems}
 \label{table:config}
@@ -259,12 +259,12 @@ sys-cpu2 & GRU                          & 512                          & 2      
 \hline
 \multirow{2}{*}{} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ runtime\end{tabular}} & \multirow{2}{*}{vmap} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ model\end{tabular}} & \multicolumn{2}{c}{newstest2014} & \multicolumn{2}{c}{newstest2015} & \multirow{2}{*}{model size} \\ \cline{5-8}
                   &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \hline
-sys-cpu1          & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\ \hline
-sys-cpu1-f          & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\ \hline
-sys-cpu2          & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\ \hline
-sys-cpu2          & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\ \hline
-sys-cpu2          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\ \hline
-sys-cpu2-f          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \hline
+LSTM & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\ \hline
+LSTM-opt & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\ \hline
+GRU          & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\ \hline
+GRU          & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\ \hline
+GRU          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\ \hline
+GRU-opt          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \hline
 \end{tabular}
 \caption{Evaluations on two student systems (the suffix "-f" means it is the final submission)}
 \label{table:student}
