@@ -26,6 +26,7 @@
 \usepackage{textcomp}
 \usepackage{pgfplotstable}
 \usepackage{enumitem}
+\usepackage{booktabs}
 \setlist{itemsep=0pt}
 
 %\aclfinalcopy % Uncomment this line for the final submission
@@ -150,7 +151,7 @@ first system {\tt LSTM-opt-2} is a 2-layer LSTM network that is only
 -2.19 BLEU points behind that reference transformer model, but with a
 speed-up of \textcolor{red}{x18}. Our second system achieves 23.11 on
 WNMT 2018 English-German newstest2014 (-4.85 behind the reference
-model) but with an additional decoding speed-up of \textcolor{red}{108}.
+model) but with an additional decoding speed-up of \textcolor{red}{x108}.
 The final model reaches 1000 words/sec on the evaluation CPU hardware.
 
 % By combining all these techniques, we generate a large number of
@@ -178,17 +179,20 @@ result in  systems inside of the pareto convex border. For instance, we
 compare using 8-bit quantization to 16-bit quantization.
 
 
-\begin{table*}[]
+\begin{table}[]
 \centering
 \begin{tabular}{lccccrr}
-\hline
-                    & \multicolumn{1}{l}{\(\displaystyle N \)} & \multicolumn{1}{l}{\(\displaystyle d_{model} \)} & \multicolumn{1}{l}{\(\displaystyle d_{ff} \)} & \multicolumn{1}{l}{\(\displaystyle h \)} & \multicolumn{1}{l}{newstest2014} & \multicolumn{1}{l}{newstest2015} \\ \hline
-Transformer (base)  & 6                     & 512                        & 2048                  & 8                        & 27.30                            & 29.36                            \\ \hline
-Transformer (large) & 6                     & 512                        & 4096                  & 8                        & 27.96                            & 29.95                            \\ \hline
+\toprule
+Trans.                    & \multicolumn{1}{l}{\(\displaystyle N \)} & \multicolumn{1}{l}{\(\displaystyle d \)} & \multicolumn{1}{l}{\(\displaystyle d_{ff} \)} & \multicolumn{1}{l}{\(\displaystyle h \)} & \multicolumn{1}{l}{N2014} & \multicolumn{1}{l}{N2015} \\
+
+\midrule
+ Base  & 6                     & 512                        & 2048                  & 8                        & 27.30                            & 29.36                            \\
+ Large & 6                     & 512                        & 4096                  & 8                        & 27.96                            & 29.95                            \\
+\bottomrule
 \end{tabular}
-\caption{Evaluation on transformer based teacher system}
+\caption{Evaluation of base and large transformer teacher model on Newstest 2014 and 2015.}
 \label{table:transformer}
-\end{table*}
+\end{table}
 
 \section{Training and Distillation}
 
@@ -260,8 +264,8 @@ distillation process not only improves throughput of the student
 models and reduce their size, but can also improve the translation
 quality if the width of the network is not reduced too much. Also,
 these distilled systems have the interesting feature that they
-performed almost identically when reducing beam search size $k$ from
-$k=5$ to $k=2$. Seemingly the smaller model learns from ``smoother''
+performed almost identically when reducing beam search size $K$ from
+$K=5$ to $K=2$. Seemingly the smaller model learns from ``smoother''
 translations and can produce effective results with simpler syntactic
 structure and even word choices. One major question here was to find
 out whether cross-class distillation works as well, here from an
@@ -284,21 +288,16 @@ system are given in \newcite{KleinKDSR17}.
 
 
 \begin{figure}
-\scalebox{0.9}{
+\scalebox{0.85}{
 \includegraphics[width=\linewidth]{decoder.pdf}
 }
-\scalebox{0.9}{
+\scalebox{0.85}{
 \includegraphics[width=\linewidth]{decoder_linear.pdf}
 }
 \caption{\small Profiling of the throughput during inference on newstest2014. Each line is a different system. The {\tt LSTM-1,2,5} are baseline systems with respective beam size of 1, 2, 5. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the final systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
 \label{fig:decoding_cost}
 \end{figure}
 
-\begin{figure}
-\includegraphics[width=\linewidth]{beambatch.png}
-\caption{Evaluations on different beam size and batch size}
-\label{fig:beam_batch_bleu}
-\end{figure}
 
 Profiling of the throughput of our student system, before
 and after further optimizations, is presented in Figure~\ref{fig:decoding_cost}. Here we compare along two splits,
@@ -396,19 +395,19 @@ with multiple $n-gram$ length enables better match-rate than the
 \begin{table*}[]
 \centering
 \begin{tabular}{ccccccccc}
-\hline
+\toprule
 \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Max \\Sequence\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Max \\Freq\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\# \\Meaning\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}vocab\\ per token\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Test\\Coverage\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Linear\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}SoftMax\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{File Size} & \multirow{2}{*}{BLEU} \\
-\\ \hline
- &  &  &  &  & 143.86 & 4.97 & 239M & 23.24 \\ \hline
-1 & 1 & 50 & 2 & 30\% & 3.78 & 0.11 & 295M & 21.98 \\ \hline
-2 & 1 & 100 & 24 & 86\% & 5.97 & 0.16 & 902M & 23.13 \\ \hline
-2 & 1 & 150 & 25 & 86\% & 6.63 & 0.18 & 918M & 23.16 \\ \hline
-2 & 1 & 50 & 22 & 85\% & 5.34 & 0.14 & 846M & 23.09 \\ \hline
-2 & 2 & 100 & 22 & 85\% & 4.08 & 0.11 & 324M & 23.02 \\ \hline
-2 & 2 & 150 & 22 & 85\% & 3.95 & 0.11 & 324M & 23.02 \\ \hline
-2 & 2 & 50 & 20 & 84\% & 3.95 & 0.11 & 322M & 23.03 \\ \hline
-3 & 1 & 50 & 30 & 90\% & 5.23 & 0.15 & 1127M & 23.16 \\ \hline
-
+\\ \midrule
+ &  &  &  &  & 143.86 & 4.97 & 239M & 23.24 \\
+1 & 1 & 50 & 2 & 30\% & 3.78 & 0.11 & 295M & 21.98 \\
+2 & 1 & 100 & 24 & 86\% & 5.97 & 0.16 & 902M & 23.13 \\
+2 & 1 & 150 & 25 & 86\% & 6.63 & 0.18 & 918M & 23.16 \\
+2 & 1 & 50 & 22 & 85\% & 5.34 & 0.14 & 846M & 23.09 \\
+2 & 2 & 100 & 22 & 85\% & 4.08 & 0.11 & 324M & 23.02 \\
+2 & 2 & 150 & 22 & 85\% & 3.95 & 0.11 & 324M & 23.02 \\
+2 & 2 & 50 & 20 & 84\% & 3.95 & 0.11 & 322M & 23.03 \\
+3 & 1 & 50 & 30 & 90\% & 5.23 & 0.15 & 1127M & 23.16 \\
+\bottomrule
 \end{tabular}
 \caption{Evaluations of n-gram vocabulary mappings on newstest2014.}
 \label{table:ngram}
@@ -437,7 +436,7 @@ The average sentence length for 32K BPE is about 29.1 and for 64K BPE, it is abo
  \paragraph{8-bit quantization:}
 To reduce further the system size, we also considered use of {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}. {\tt gemmlowp} is a library allowing quantization to unsigned 8 bits integer through dynamic offset/multiplier/shift parameters. Like our implementation of 16-bit quantization, the low precision is only for storing the parameters, the dot product is using larger register for accumulating intermediate result of the operation. {\tt gemmlowp} usage is for embedded application where speed but also power usage is critical. The idea was tempting, but it was not clear if such quantization schema could actually outperform quantization using SIMD extended instruction set on modern processors. We ran  comparative tests using AVX2 instructions set and found out that for multiplications of large matrixes $(20,1024) * (1024,512)$ - optimized INT16 implementation was about 3 times faster than  {\tt gemmlowp} UINT8 implementation\footnote{On Intel(R) Core(TM) i7-6850K CPU @ 3.60GHz}. Main reason being that AVX2 (and AVX512 twice faster) have a very powerful multiply and add instructions\footnote{{\tt \_mm256\_madd\_epi16} and {\tt \_mm512\_madd\_epi16}} allowing to perform in one single cycle the dot product of vectors 32*INT16 and at the same time, the pair accumulation in a vector 16*INT32.
 
-\paragraph{Other architectures:}
+\paragraph{Non-recurrent architectures:}
 In the same spirit of reducing the decoder layer, \newcite{DBLP:journals/corr/Devlin17} introduces an hybrid decoder with only one RNN attentional layer followed by fully connected layers with residual connections. The author reports reaching same quality than a multiple layers RNN with attention. We tried several variants around this idea but could not reproduce the same results.
 We also tried to reduce the width of the RNN more, but impact on quality was too important.
 % FC
@@ -450,10 +449,11 @@ We also tried to reduce the width of the RNN more, but impact on quality was too
 \begin{table*}[]
 \centering
 \begin{tabular}{lcccccc}
-\hline
-     & \multicolumn{1}{l}{RNN type} & \multicolumn{1}{l}{RNN size} & \multicolumn{1}{l}{encoder layers} & \multicolumn{1}{l}{decoder layers} & \multicolumn{1}{l}{embedding size} & \multicolumn{1}{l}{optim} \\ \hline
-LSTM & b-LSTM                         & 1024                         & 2                                  & 2                                  & 512                                & sgd                       \\ \hline
-GRU & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\ \hline
+\toprule
+     & \multicolumn{1}{l}{RNN type} & \multicolumn{1}{l}{RNN size} & \multicolumn{1}{l}{encoder layers} & \multicolumn{1}{l}{decoder layers} & \multicolumn{1}{l}{embedding size} & \multicolumn{1}{l}{optim} \\ \midrule
+LSTM & b-LSTM                         & 1024                         & 2                                  & 2                                  & 512                                & sgd                       \\
+GRU & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\
+\bottomrule
 \end{tabular}
 \caption{Configurations for the two student systems}
 \label{table:config}
@@ -462,69 +462,113 @@ GRU & GRU                          & 512                          & 2           
 \begin{table*}[]
 \centering
 \begin{tabular}{lcccccccc}
-\hline
+\toprule
 \multirow{2}{*}{} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ runtime\end{tabular}} & \multirow{2}{*}{vmap} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ model\end{tabular}} & \multicolumn{2}{c}{newstest2014} & \multicolumn{2}{c}{newstest2015} & \multirow{2}{*}{model size} \\ \cline{5-8}
-                  &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \hline
-LSTM & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\ \hline
-LSTM-opt & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\ \hline
-GRU          & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\ \hline
-GRU          & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\ \hline
-GRU          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\ \hline
-GRU-opt          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \hline
+                  &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \midrule
+LSTM & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\
+LSTM-opt & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\
+GRU          & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\
+GRU          & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\
+GRU          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\
+GRU-opt          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \bottomrule
 \end{tabular}
 \caption{Evaluations on two student systems (the suffix "-opt" means it is the final submission)}
 \label{table:student}
 \end{table*}
 
-\section{Evaluations}
+\section{Results}
 
-In this section, we show our internal evaluation results.
-We train two NMT systems based on the synthetic training data with \textit{OpenNMT}, a LuaTorch version implementation on sequence to sequence MT. Table \ref{table:config} lists the different configurations for these two systems.
+\begin{figure}
+\includegraphics[width=\linewidth]{beambatch.png}
+\caption{Evaluations on different beam size and batch size}
+\label{fig:beam_batch_bleu}
+\end{figure}
 
-For system {\tt LSTM-opt-2}, we use a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
+After tuning, we settled on two optimal NMT systems based on the
+distilled training data. Table \ref{table:config}
+lists the different configurations for these two systems:
+
+\begin{itemize}
+\item {\tt LSTM-opt-2}, uses a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
 We use a word embedding size of 512 and set the dropout to 0.3.
 The batch size is set to 64 and the default learning rate is 1.0 with sgd optimization.
-For system {\tt GRU-opt-2}, we train with a smaller network, with GRU layers, 512 hidden size.
+\item {\tt GRU-opt-2}, uses  a smaller network, with GRU layers, 512 hidden size.
 On the encoder side, we have 2 layers, while on the decoder side, only 1 layer is set.
-We use adam optimization with the starting learning rate 0.0002.
+We use Adam optimization with the starting learning rate 0.0002.
+\end{itemize}
 Both systems are trained up to 10 epochs.
 
-Evaluations are shown in Table \ref{table:student}.
-For system {\tt LSTM-opt-2}, the cpu time during decoding improves from 1694.16 seconds to 621.17 seconds (saving 63.3\%), with a loss of only 0.19 BLEU score, on newstest2014.
+Table \ref{table:student} shows our internal evaluations.
+For system {\tt LSTM-opt-2}, the CPU time during decoding improves from 1694.16 seconds to 621.17 seconds (saving 63.3\%), with a loss of only 0.19 BLEU score, on newstest2014.
 For system {\tt GRU-opt-2}, the trends are similar.
 80.3\% cpu time is saving, while only 0.13 BLEU score is lost.
 
-We also compare the different influence with the options quantize runtime, vmap and quantize model, on system {\tt GRU-opt-2}.
-The option quantize runtime and vmap both can save the decoding time about 50\%.
-The option quantize model functions well on halving the model size.
+We also compare the influence of quantization hyperparameters, e.g. vmap and quantize model, on system {\tt GRU-opt-2}.
+Quantize runtime and vmap both can save the decoding time about 50\%.
+The quantized model also halves the model size.
 
 \subsection{Beam size and Batch size}
 
-We further make a full testing on the decoding performance (BLEU) and CPU time of different beam size and batch size on system {\tt GRU-opt-2}.
-As shown in Figure \ref{fig:beam_batch_bleu}, for a fixed batch size, when we increase the beam size from 1 to 3, the accuracy increases as well.
-While for beam size 3, 4 and 5, there is no significant difference in accuracy which is consistent with previous findings on distilled system.
-Interestingly, for a fixed beam size, we notice also a slight improvement of accuracy when increasing the batch size as a side-effect of the dynamic vocabulary mapping and showing that some additional optimizations could be obtained on vocabulary mapping selection.
+We further test the impact on the decoding performance (BLEU) and CPU
+time of different beam size and batch size on system {\tt GRU-opt-2}.
+Figure \ref{fig:beam_batch_bleu} shows for a fixed batch size, when we
+increase the beam size from 1 to 3, the accuracy increases as well.
+While for beam size 3, 4 and 5, there is no significant difference in
+accuracy which is consistent with previous findings on distilled
+system.  Interestingly, for a fixed beam size, we notice also a slight
+improvement of accuracy when increasing the batch size. This is a
+side-effect of the dynamic vocabulary mapping per batch. This shows
+that some additional optimizations could be obtained on vocabulary
+mapping selection taking batching into account.
 
 %\input{beam_batch_newstest2014.tex}
+These experiments also show that the decoding cost increases with
+larger beam and batch size.  For beam size $K=1$ (in blue), we process
+more sentences inside each batch and the CPU cost reduces along the
+increasing of batch size.  While for the others, larger beam size and
+larger batch size both cost more computational effort.
 
-At the same time, the decoding cost is increasing when larger beam and batch size are setting (Figure \ref{fig:beam_batch_bleu}).
-For beam size 1 (in blue), we process more sentences inside each batch and the CPU cost reduces along the increasing of batch size.
-While for the others, larger beam size and larger batch size both cost more computational effort.
-
-As a result, we choose beam 2 and batch 2, balancing the performance and computation cost.
+As a result,
+we choose beam $K=2$ and batch $2$, balancing the performance and
+computation cost.
 
 %\input{beam_batch_newstest2014_cputime.tex}
 
-\section{Docker size}
-We did not focus on docker image size during the preparation of the submission, and our fastest system docker is 200M for effective 72Mb size for the model and less than 15Mb for additional code and resources. Post-submission, we looked at reducing this 100Mb overhead coming from operating system and found that easy optimizations could be applied - for instance like remove useless dependencies like Python. Without huge effort - we managed to reduced this overhead to 70Mb and it is probably easy to reduce even more.
+\subsection{Image Size}
 
-\section{Further work and Conclusion}
+We did not invest effort into reduce image size during the preparation
+of the submission. Our fastest system has a docker image of 200M for
+effective 72Mb size for the model and less than 15Mb for additional
+code and resources. Post-submission, we looked at reducing this 100Mb
+overhead coming from operating system and found that easy
+optimizations could be applied - for instance like remove useless
+dependencies like Python. Without huge effort - we managed to reduced
+this overhead to 70Mb, and it is probably easy to reduce even further.
+
+\subsection{Other Considerations}
+
+We  note that at this level of optimization, especially the use
+of quantization, makes the speed measurement very dependent on other
+processes running on the same instance, especially due to the critical
+importance of the L3/L4-cache shared between the different cores. In
+particular, we observed that 4 parallel process using fastest model
+were only reaching a x3 speed boost. To go further on parallel
+decoding, one would need to implement synchronization points between
+parallel decoding to avoid waste of memory cache transfer.
+
+
+\section{Conclusion}
 
 % docker size => -50M
-We train through distillation a fat encoder, thin decoder sequence to sequence NMT system for WNMT 2018 running on one single CPU. The models use quantization leading to both a size reduction and a speed gain. Several additional optimizations could have been applied, such as full graph quantization, augmentation of vocabulary size, more improvement on vocabulary mapping...
+This work presents the OpenNMT submission to the 2018 Shared Task of
+WNMT focusing on efficient and NMT. We show that training with
+distillation using an optimized ``fat encoder, thin decoder'' RNN
+sequence-to-sequence system we can produce a very efficient CPU based
+model. The models additionally uses quantization leading to both a
+size reduction and a speed gain. Several further optimizations
+could be applied, such as full graph quantization, augmentation
+of vocabulary size, more improvement on vocabulary mapping. Our final system though does show a significant increase in speed of \textcolor{red}{todo}...
 
-
-We need to note that at this level of optimization, especially the use of quantization, makes the speed measurement very dependent on other processes running on the same instance, especially due to the critical importance of the L3/L4-cache shared between the different cores. In particular, we observed that 4 parallel process using fastest model were only reaching a x3 speed boost. To go further on parallel decoding, one would need to implement synchronization points between parallel decoding to avoid waste of memory cache transfer.
 
 %\section*{Acknowledgments}
 %
