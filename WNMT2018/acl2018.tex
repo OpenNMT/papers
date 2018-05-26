@@ -39,7 +39,7 @@
 
 \newcommand\BibTeX{B{\sc ib}\TeX}
 
-\title{Fat Encoder, Thin Decoder \protect\\ OpenNMT System Description for WNMT 2018}
+\title{Fat Encoder, Thin Decoder: \protect\\ OpenNMT System Description for WNMT 2018}
 
 \author{First Author \\
   Affiliation / Address line 1 \\
@@ -57,29 +57,81 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-In this paper, we present OpenNMT sequence to sequence neural machine translation (NMT) system for the WNMT 2018 evaluation optimized for CPU inference. This work led to the development of new features that have been integrated to OpenNMT and already available to the community.
+  This paper presents the OpenNMT neural machine translation (NMT)
+  system for the WNMT 2018 evaluation optimized for CPU
+  inference. This work led to the development of new features that
+  have been integrated to OpenNMT and already available to the
+  community.
 
 \end{abstract}
 
 \section{Introduction}
-In this paper, we describe the systems we built and selected for WNMT 2018\footnote{\url{https://sites.google.com/site/wnmt18/shared-task}}. Our specific interest was to explore the different techniques for training and optimizing CPU models with high throughput while keeping high accuracy. Even though we did not put real focus on memory and docker size footprint, we applied basic optimization techniques to reduce the final size of our models (delivered as fully functional dockers).
 
-For this purpose, we explored the following techniques:
-\begin{itemize}
-\item Model distillation as introduced by \newcite{distillation} to transfer knowledge from a strong baseline neural network (the teacher) to a smaller network (the student); we were in particular interested to explore the possibility of distilling knowledge from a transformer model \cite{vaswani2017attention} to a light-weight RNN model,
-\item Changing the structure of the network by increasing the size of more efficient modules, reducing the size of the more costly, and replacing default gated units,
-\item Using C++ based decoder \textit{CTranslate}\footnote{\url{https://github.com/OpenNMT/CTranslate}},
-\item Reducing dynamically the runtime target vocabulary extending \cite{shi2017speeding} ideas,
-\item Quantizing parameters of the models as presented in \newcite{DBLP:journals/corr/Devlin17} or {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}
-\end{itemize}
+As neural machine translation becomes more widely deployed in
+production environments, it becomes increasingly important to serve
+translations models in as fast and as memory-efficient way possible,
+both on specialized GPU hardware and on standard CPU environments. The
+WNMT 2018 shared task
+\footnote{\url{https://sites.google.com/site/wnmt18/shared-task}}
+focused on comparing different systems on both accuracy and
+computational efficiency.
 
-The complete training workflow is therefore based on the following steps:
-\begin{itemize}
-\item Preparation of data and sub-tokenization model - described in section \ref{data}.
-\item Training of strong a Teacher transformer model, and translation of the full dataset with this model - described in section \ref{transformer}.
-\item Training of student model on translated data - described in section \ref{distill} and \ref{seq2seq}.
-\item Quantizing the generated model - described in section \ref{quantize}.
-\end{itemize}
+
+This paper describes the entry for the OpenNMT system to this
+competition.  Our specific interest was to explore the different
+techniques for training and optimizing CPU models with high throughput
+while maintaining high accuracy, although allowing for a small
+decrease below the state-of-the-art. While we did not put real focus
+on memory and docker size footprint, we applied basic optimization
+techniques to reduce the final size of our models.
+
+Our strategy for the shared task was to take advantage of four main
+optimization techniques: (a) sequence-level \textit{distillation}, in
+particular cross-class distillation from a transformer model
+\cite{vaswani2017attention} to an RNN, (b) \textit{architecture
+  search}, changing the structure of the network by increasing the
+size of more efficient modules, reducing the size of the more costly
+and replacing default gated units, (c) \textit{quantization} and
+faster matrix operations, based on the work of
+\newcite{DBLP:journals/corr/Devlin17} and {\tt
+  gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}} and (d)
+specialized \textit{precomputation} such as reducing dynamically the
+runtime target vocabulary \cite{shi2017speeding}. All of these
+methods are employed in a special-purpose C++-based decoder
+\textit{CTranslate}\footnote{\url{https://github.com/OpenNMT/CTranslate}}.
+The complete training workflow including data preparation and
+distillation is described in Section~2. Inference techniques and quantization are
+described in Section~3.
+
+
+% \begin{itemize}
+% \item Preparation of data and sub-tokenization model - described in section \ref{data}.
+% \item Training of strong a Teacher transformer model, and translation of the full dataset with this model - described in section \ref{transformer}.
+% \item Training of student model on translated data - described in section \ref{distill} and \ref{seq2seq}.
+% \item Quantizing the generated model - described in section \ref{quantize}.
+% \end{itemize}
+
+
+
+% \begin{itemize}
+% \item Sequence-level distillation \newcite{distillation} to transfer
+%   knowledge from a strong baseline neural network (the teacher) to a
+%   smaller network (the student); we were in particular interested to
+%   explore the possibility of cross-class distillation from a transformer
+%   model \cite{vaswani2017attention} to a light-weight RNN model,
+
+% \item Changing the structure of the network by increasing the size of more efficient modules, reducing the size of the more costly, and replacing default gated units,
+% \item Quantizing parameters of the models as presented in \newcite{DBLP:journals/corr/Devlin17} or {\tt gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}
+% \item Reducing dynamically the runtime target vocabulary extending \cite{shi2017speeding} ideas,
+% \end{itemize}
+
+% The complete training workflow is therefore based on the following steps:
+% \begin{itemize}
+% \item Preparation of data and sub-tokenization model - described in section \ref{data}.
+% \item Training of strong a Teacher transformer model, and translation of the full dataset with this model - described in section \ref{transformer}.
+% \item Training of student model on translated data - described in section \ref{distill} and \ref{seq2seq}.
+% \item Quantizing the generated model - described in section \ref{quantize}.
+% \end{itemize}
 
 \begin{figure}
 \scalebox{0.9}{
@@ -89,13 +141,42 @@ The complete training workflow is therefore based on the following steps:
 \label{fig:pareto}
 \end{figure}
 
-By combining all these techniques, we generated a large number of models and picked two of them presenting interesting trade-off between speed and quality and on the frontier of the Pareto curve (see Figure \ref{fig:pareto}). Our first system {\tt LSTM-opt-2} is a simple 2-layer LSTM network is only -2.19 points behind reference transformer model, with a speed-up of \textcolor{red}{x18}. Our second system achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind the reference model) but  with an additional decoding speed-up of \textcolor{red}{x6} at about 1000 words/sec on the evaluation hardware.
+Our experiments compare the different approaches in terms of speed and
+accuracy. A meta question of this work is to decide which models
+represent interesting and useful points on the Pareto curve. The main
+results are described in Figure~\ref{fig:pareto}.  From these results
+we highlight two models which were submitted to the shared task: Our
+first system {\tt LSTM-opt-2} is a 2-layer LSTM network that is only
+-2.19 BLEU points behind that reference transformer model, but with a
+speed-up of \textcolor{red}{x18}. Our second system achieves 23.11 on
+WNMT 2018 English-German newstest2014 (-4.85 behind the reference
+model) but with an additional decoding speed-up of \textcolor{red}{108}.
+The final model reaches 1000 words/sec on the evaluation CPU hardware.
 
-Also, we show that distillation of transformer model outperforms training result of a strong RNN model - extending findings of \cite{DBLP:journals/corr/CregoS16} who reported that student systems could outperform their teacher for reference RNN-based model.
+% By combining all these techniques, we generate a large number of
+% models and picked two of them presenting interesting trade-off between
+% speed and quality and on the frontier of the Pareto curve (see Figure
+% \ref{fig:pareto}). Our first system {\tt LSTM-opt-2} is a simple
+% 2-layer LSTM network is only -2.19 points behind reference transformer
+% model, with a speed-up of \textcolor{red}{x18}. Our second system
+% achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind
+% the reference model) but with an additional decoding speed-up of
+% \textcolor{red}{x6} at about 1000 words/sec on the evaluation
+% hardware.
 
-Finally, we also report several other negative experiments that produced systems inside of the pareto convex border. For instance, we compared using 8-bit quantization to 16-bit quantization.
+We additionally report several new results about recent work in NMT
+and model efficiency: (a) we show that distillation of transformer
+model outperforms training result of a strong RNN model - extending
+findings of \cite{DBLP:journals/corr/CregoS16} who reported that
+student systems could outperform their teacher for reference RNN-based
+model. (b) we show that distillation from a transformer neural network
+to a simple RNN neural network is efficient, (c) we compare
+quantitatively different quantizations, and (b) we give an improved
+algorithm to dynamically select  target vocabulary for a given batch.
+Finally, we also report several other negative experiments that
+result in  systems inside of the pareto convex border. For instance, we
+compare using 8-bit quantization to 16-bit quantization.
 
-Beyond the presented systems, this paper brings the following contributions: a/ we prove that distillation from a transformer neural network to a simple RNN neural network is efficient, b/ we compare quantitatively different quantizations, c/ we improve algorithm to select dynamically target vocabulary for a given batch.
 
 \begin{table*}[]
 \centering
@@ -109,36 +190,85 @@ Transformer (large) & 6                     & 512                        & 4096 
 \label{table:transformer}
 \end{table*}
 
-\section{Training}
+\section{Training and Distillation}
 
-\subsection{Data}
-\label{data}
+% \subsection{Data}
+% \label{data}
 
-We use constrained data set provided by WNMT 2018, which is a preprocessed and tokenized version of WMT 2014 on English-German translation\footnote{\url{https://nlp.stanford.edu/projects/nmt/}}. The training data contains about 4.5M sentence pairs. We use newstest2013 as the validation set and newstest2014 and newstest2015 as the testing sets. Before training, we trained a 32K joint byte-pair encoding (BPE) to preprocess the data \cite{sennrich2015neural}. Hence, the generated subword vocabulary is less than 40K word pieces. And we limit the sentence length to 100 based on BPE preprocessing in both source and target side (excluding only $0.31\%$ of the training corpus). After decoding, we remove the BPE joiners and evaluate the tokenized output with multi-bleu.perl\footnote{\url{https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl}}.
+Following the shared task setup, we use the data set provided by WNMT
+2018, which is a preprocessed and tokenized version of WMT 2014 on
+English-German
+translation\footnote{\url{https://nlp.stanford.edu/projects/nmt/}}. The
+training data contains about 4.5M sentence pairs. We use newstest2013
+as the validation set and newstest2014 and newstest2015 as the testing
+sets. Before training, we trained a 32K joint byte-pair encoding (BPE)
+to preprocess the data \cite{sennrich2015neural}. Hence, the generated
+subword vocabulary is less than 40K word pieces. We limit the sentence
+length to 100 based on BPE preprocessing in both source and target
+side (excluding only $0.31\%$ of the training corpus). After decoding,
+we remove the BPE joiners and evaluate the tokenized output with
+multi-bleu.perl\footnote{\url{https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl}}.
 
-\subsection{Transformer}
+\subsection{Teacher Model: Transformer}
 \label{transformer}
-% teacher system
-We train a transformer based system \cite{vaswani2017attention} as our teacher system.
-Compared with RNN/CNN models, transformer based model does not rely on recurrent or convolution network.
-It directly models the representations of each sentence with self-attention mechanism.
-Hence much longer information in the sentences can be learned especially important for language pairs like English-German and it currently achieves state-of-art results for machine translation \cite{DBLP:journals/corr/abs-1803-02155}
 
-Another advantage for transformer based system is that the training process can be parallelized easily.
-However, transformer networks still require a large number of parameters and also large memory to achieve the best performance.
-As a result, the parallelizable training, the flexibility in modeling both long-range/local
-dependencies, and the state-of-the-art performance make this architecture suitable to act as the teacher system.
+For our base teacher model, we train a transformer NMT system
+\cite{vaswani2017attention}.  Unlike standard sequence-to-sequence
+models, the transformer does not use recurrent or convolution
+networks.  It directly models the representations of each sentence
+with self-attention mechanism.  Hence much longer term dependencies
+can be learned, which is especially important for language pairs like
+English-German. It currently achieves state-of-art results for machine
+translation \cite{DBLP:journals/corr/abs-1803-02155} Another advantage
+for transformer based system is that the MLE training process can be
+parallelized easily across multiple GPUs.
 
-We used \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}} to train two transformer based systems: base and large described in Table \ref{table:transformer} with their evaluation. For both, the learning rate is set to 2.0 and warmup steps 8000, we average the last 8 checkpoints to get the final model. Our baseline system outperforms in particular the provided baseline sockeye model with +0.37 BLEU on newstest 2014.
+Due to their current effectiveness, it would be tempting to use the
+transformer architecture directly for our final system (and other
+submissions took this approach). However we decided not to use this
+strategy. For one transformer networks still require a large number of
+parameters and also large memory to achieve the best
+performance. Additionally some of the training benefits of transformer
+are less apparent in auto-regressive inference.
+
+As a result, the parallelizable training, the flexibility in modeling
+both long-range/local dependencies, and the state-of-the-art
+performance make this architecture suitable to act as our teacher
+system. We used
+\textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}}
+to train two transformer based systems: base and large described in
+Table \ref{table:transformer} with their evaluation. For both, the
+learning rate is set to 2.0 and warmup steps 8000, we average the last
+8 checkpoints to get the final model. Our baseline system outperforms
+the provided baseline Sockeye model by +0.37 BLEU on newstest 2014.
 
 \subsection{Distillation}
 \label{distill}
 
-We follow the method described in \newcite{distillation}. Firstly, we build the full transformer based MT system \cite{vaswani2017attention} as the teacher system. Secondly, we use the teacher system to translate all the source sentences to generate a simplified target sentences set.
-Then, we use this simplified corpus (original source and newly generated target) to train a student system, in our case a sequence-to-sequence models similar to \newcite{bahdanau2014neural}.
-The student system can be assigned with smaller network size and this process is called distillation.
+To train our smaller student system, we follow the sequence-level
+knowledge distillation approach described by
+\newcite{distillation}. First, we build the full transformer as
+above. Next, we use the teacher system to retranslate all the training
+source sentences to generate a simplified target sentences set.  Then,
+we use this simplified corpus (original source and newly generated
+target) to train a student system.  The student system can be assigned
+with smaller network size, in our case an RNN-based
+sequence-to-sequence models similar to \newcite{bahdanau2014neural}
 
-According to \newcite{DBLP:journals/corr/CregoS16}, distillation process not only improves throughput of the models and reduce their size, but can also improve the translation quality if the width of the network is not reduced too much. Also, these distilled systems have the interesting feature that they performed almost identically for beam 2 or beam 5 beam search. The interpretation for these facts being that the teacher produced simplified translations. That is, translations that are usually closer, in terms of syntactic structure and even word choices, to the input sentences than reference translations. Thus the student model better manage to learn and generalize this simplified knowledge. One major question here was to find out whether distillation from an transformer model could benefit a student RNN model. We proved it was the case, since the best distilled system outperforms a larger model trained with the original data.
+Results from \newcite{DBLP:journals/corr/CregoS16} show that the
+distillation process not only improves throughput of the student
+models and reduce their size, but can also improve the translation
+quality if the width of the network is not reduced too much. Also,
+these distilled systems have the interesting feature that they
+performed almost identically when reducing beam search size $k$ from
+$k=5$ to $k=2$. Seemingly the smaller model learns from ``smoother''
+translations and can produce effective results with simpler syntactic
+structure and even word choices. One major question here was to find
+out whether cross-class distillation works as well, here from an
+transformer model to student RNN model.
+
+% We proved it was the case, since the best distilled system
+% outperforms a larger model trained with the original data.
 
 \subsection{Sequence to Sequence}
 \label{seq2seq}
@@ -198,7 +328,7 @@ CTranslate's goal is to offer a lightweight and embeddable solution for executin
 \subsection{Reduction of vocabulary size}
 % find reference paper
 % our contribution to extend n-gram level
-To reduce the size of the vocabulary for each batch, we started up from word alignment method presented in \newcite{shi2017speeding}. This approach is essentially a 1-gram approach. However to increase the coverage of the selected meanings without increasing the size of the mapping model, we first extracted words in the target languages that are spontaneously generated (generally without alignment with the source) - e.g. determiners when translating from English to French. We kept the 100 most frequent such words and call them 0-gram meanings. Then we go trough 1-gram, 2-gram, ..., n-grams. For each source phrase $f_1 ... f_n$, we consider the target phrase as a bag of words, and we check the meanings of the covered $0$, ... $n-1$-grams and discard these meanings from the bag of words. If words remain after examining all of the sub-sequence, we consider these words as new meaning for the current phrase. This approach extends vocabulary mapping to multi-word expressions\footnote{For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams, and 1-gram. However, {\tt once more} translated by {\tt ànouveau} will need 2 additional meanings not covered in 0-gram or 1-gram meanings}. 
+To reduce the size of the vocabulary for each batch, we started up from word alignment method presented in \newcite{shi2017speeding}. This approach is essentially a 1-gram approach. However to increase the coverage of the selected meanings without increasing the size of the mapping model, we first extracted words in the target languages that are spontaneously generated (generally without alignment with the source) - e.g. determiners when translating from English to French. We kept the 100 most frequent such words and call them 0-gram meanings. Then we go trough 1-gram, 2-gram, ..., n-grams. For each source phrase $f_1 ... f_n$, we consider the target phrase as a bag of words, and we check the meanings of the covered $0$, ... $n-1$-grams and discard these meanings from the bag of words. If words remain after examining all of the sub-sequence, we consider these words as new meaning for the current phrase. This approach extends vocabulary mapping to multi-word expressions\footnote{For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams, and 1-gram. However, {\tt once more} translated by {\tt ànouveau} will need 2 additional meanings not covered in 0-gram or 1-gram meanings}.
 
 We have multiple criterion to extract a vocabulary map through the maximal sequence (MS), the maximal frequency of the pair (MF), the maximum number of meaning (KM). The efficiency of a vocabulary map can be evaluated through the coverage of the predicted meanings  for a reference test set (TC), the final translation quality and the average number of meaning per vocab, and the actual time spend in generator layer (Linear and Softmax).
 We present in Table \ref{table:ngram} several vocabulary maps with these different metrics and in Table \ref{table:student} the impact of using such a vocabulary map on the presented systems. Compared to \newcite{shi2017speeding}, our approach with multiple $n-gram$ length enables better match-rate than the 1-gram approach (saturating the coverage TC at 80\%).
@@ -339,4 +469,3 @@ We need to note that at this level of optimization, especially the use of quanti
 \bibliographystyle{acl_natbib}
 
 \end{document}
-
