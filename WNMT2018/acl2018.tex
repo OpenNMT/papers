@@ -58,11 +58,17 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-  This paper presents the OpenNMT neural machine translation (NMT)
-  system for the WNMT 2018 evaluation optimized for CPU
-  inference. This work led to the development of new features that
-  have been integrated to OpenNMT and already available to the
-  community.
+
+  We presents a system description of the OpenNMT neural machine
+  translation (NMT) entry for the WNMT 2018 evaluation. This work
+  targets developing a heavily optimized NMT inference system
+  targeting a high-performance CPU system. The system uses a
+  combination of four techniques, all of which lead to significant
+  speed-ups in combination: (a) sequence distillation, (b)
+  architecture modifications, (c) precomputation, particularly of
+  vocabulary, and (d) CPU targeted quantization. This work led to the
+  development of new features that have been integrated to OpenNMT and
+  already available to the community.
 
 \end{abstract}
 
@@ -92,12 +98,12 @@ particular cross-class distillation from a transformer model
 \cite{vaswani2017attention} to an RNN, (b) \textit{architecture
   search}, changing the structure of the network by increasing the
 size of more efficient modules, reducing the size of the more costly
-and replacing default gated units, (c) \textit{quantization} and
+and replacing default gated units,  (c)
+specialized \textit{precomputation} such as reducing dynamically the
+runtime target vocabulary \cite{shi2017speeding}, and (d) \textit{quantization} and
 faster matrix operations, based on the work of
 \newcite{DBLP:journals/corr/Devlin17} and {\tt
-  gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}} and (d)
-specialized \textit{precomputation} such as reducing dynamically the
-runtime target vocabulary \cite{shi2017speeding}. All of these
+  gemmlowp}\footnote{\url{https://github.com/google/gemmlowp}}. All of these
 methods are employed in a special-purpose C++-based decoder
 \textit{CTranslate}\footnote{\url{https://github.com/OpenNMT/CTranslate}}.
 The complete training workflow including data preparation and
