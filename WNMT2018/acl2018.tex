@@ -242,7 +242,7 @@ learning rate is set to 2.0 and warmup steps 8000, we average the last
 8 checkpoints to get the final model. Our baseline system outperforms
 the provided baseline Sockeye model by +0.37 BLEU on newstest 2014.
 
-\subsection{Distillation}
+\subsection{Distillation to RNN}
 \label{distill}
 
 To train our smaller student system, we follow the sequence-level
@@ -267,14 +267,21 @@ structure and even word choices. One major question here was to find
 out whether cross-class distillation works as well, here from an
 transformer model to student RNN model.
 
+Our student NMT system follows the standard architecture of
+~\newcite{luong-pham-manning:2015:EMNLP}. It is implemented as an
+encoder-decoder network with multiple layers of a RNN with Long
+Short-Term Memory hidden \cite{Hochreiter:1997:LSM:1246443.1246450} units and attentional architecture. Full
+details of the
+\textit{OpenNMT}\footnote{\url{https://github.com/OpenNMT/OpenNMT}}
+system are given in \newcite{KleinKDSR17}.
+%Additional details are given in \cite{DBLP:journals/corr/CregoKKRYSABCDE16}.
+
 % We proved it was the case, since the best distilled system
 % outperforms a larger model trained with the original data.
 
-\subsection{Sequence to Sequence}
+\subsection{Model Analysis}
 \label{seq2seq}
 
-Our baseline NMT system follows the architecture presented in ~\newcite{luong-pham-manning:2015:EMNLP}. It is implemented as an encoder-decoder network with multiple layers of a RNN with Long Short-Term Memory hidden units ~\cite{DBLP:journals/corr/ZarembaSV14} and attentional architecture from ~\newcite{luong-pham-manning:2015:EMNLP} available on \textit{OpenNMT}\footnote{\url{https://github.com/OpenNMT/OpenNMT}}. Full details of the system are given in \newcite{KleinKDSR17}.
-%Additional details are given in \cite{DBLP:journals/corr/CregoKKRYSABCDE16}.
 
 \begin{figure}
 \scalebox{0.9}{
@@ -283,7 +290,7 @@ Our baseline NMT system follows the architecture presented in ~\newcite{luong-ph
 \scalebox{0.9}{
 \includegraphics[width=\linewidth]{decoder_linear.pdf}
 }
-\caption{Profiling of the throughput during inference of newstest2014. Each line is a different system. The {\tt LSTM-1,2,5} are baseline systems with respective beam size of 1, 2, 5. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the presented systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
+\caption{\small Profiling of the throughput during inference on newstest2014. Each line is a different system. The {\tt LSTM-1,2,5} are baseline systems with respective beam size of 1, 2, 5. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the final systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
 \label{fig:decoding_cost}
 \end{figure}
 
@@ -293,21 +300,36 @@ Our baseline NMT system follows the architecture presented in ~\newcite{luong-ph
 \label{fig:beam_batch_bleu}
 \end{figure}
 
-Profiling of the throughput of such system is presented in Figure \ref{fig:decoding_cost}. From this analysis we gather the following facts:
+Profiling of the throughput of our student system, before
+and after further optimizations, is presented in Figure~\ref{fig:decoding_cost}. Here we compare along two splits,
+the components of the system: encoder, decoder, attention, word generation, and beam search; and model components: linear, MM (matrix multiply, primarily in attention), softmax, actiations, and other.
+From this analysis we gather the following
+facts:
 
 \begin{itemize}
 \item The most costly part of the inference is the generator, that is the final Linear layer feeding Softmax with weights corresponding to each single vocab of the target language. This is by far the largest matrix multiplication of the system: $(B,W) * (W,V)$ (with $B$ being the batch*beam size, $W$ the width of the network, and $V$ the size of the vocabulary).
 \item Although the cost of the encoder for beam size 1 is higher than the decoder, the decoder cost - including generator and attention model - grows linearly with the beam size.
-\item Transversally to the different component of the network, the most costly module is the Linear module cumulating more 95\% of the complete processing time
+\item The most costly operation is the Linear matrix-vector multiplies in the RNNs and generator,
+  contributing more 95\% of the complete processing time
 \end{itemize}
 
-For these observations, it is obvious that we needed to optimize the efficiency of Linear operation (basic matrix multiplication), reduce their number and have a special focus on the generation layer. It was also interesting to note that focus on any other operator was useless.
+For these observations, it is obvious that we need to optimize the
+efficiency of linear matrix-vector operation, reduce the amount
+required, and have a special focus on the generation layer.
 
-On the model architecture, we tried different model combination based on a "fat encoder, thin decoder" spirit: ie. increasing if necessary the number of operations in the encoder part if we can in parallel reduce the number of operations in the decoder.
+These observations led us to several further model experiments.  First
+we tried different model combination based on a "fat encoder, thin
+decoder" spirit: ie. increasing if necessary the number of operations
+in the encoder part if we can in parallel reduce the number of
+operations in the decoder. Second, we experimented with replacing LSTM
+cell with GRU cells \cite{DBLP:journals/corr/ChoMGBSB14}. Indeed LSTM
+cells have 4 gates while GRU cells only 3, so potentially leading to a
+25\% improvement in speed with similar performance can be
+reached. Note though, that we found GRU requires more care in optimization
+while a naive SGD optimization is generally sufficient for
+LSTM-RNN training.
 
-Also, we tried to substitute LSTM \cite{Hochreiter:1997:LSM:1246443.1246450} cell with GRU cells \cite{DBLP:journals/corr/ChoMGBSB14}. Indeed LSTM cells have 4 gates while GRU cells only 3, so potentially leading to a 25\% improvement in speed. We are not aware of any comprehensive study comparing relative efficiency of GRU vs LSTM. Our findings show that almost similar performance can be reached. However, GRU requires more care in optimization method while a naive SGD optimization is generally sufficient for LSTM-RNN trainings.
-
-\section{Decoding optimization}
+\section{Inference Optimizations}
 
 %introduction is analysis of profiling
 %=> fat encoder, thin decoder
