@@ -340,20 +340,56 @@ LSTM-RNN training.
 % full quantized graph
 % sigmoid quantizatgio
 
-\subsection{C++ Decoder: CTranslate}
+\subsection{Implementation: CTranslate}
 
-CTranslate is an open source inference engine for OpenNMT models (designed for LuaTorch version) that uses raw C++ with minimal dependencies. The project can load trained models, read the computation graph, and run inference using the popular Eigen library.
-
-CTranslate's goal is to offer a lightweight and embeddable solution for executing models and to support advanced CPU optimization such as quantization and parallel translation. Without these optimization, it still benefits from Eigen efficiency and is about 20\% faster than an Torch application using Intel MKL. Additionally, the use of C++ over a garbage-collected language ensures a predictable and reduced memory usage.
+We begin with a custom RNN decoder.  CTranslate is the open-source
+inference engine for OpenNMT models (designed for Lua Torch).  The
+code is implemented in raw C++ with minimal dependencies using the
+popular Eigen linear algebra library. CTranslate's goal is to offer a
+lightweight and embeddable solution for executing models. It benefits
+from Eigen efficiency and is about 20\% faster than an Torch
+application using Intel MKL. Additionally, the use of C++ over a
+garbage-collected language ensures a predictable and reduced memory
+usage. All additional optimizations are built on top of this library.
 
 
 \subsection{Reduction of vocabulary size}
 % find reference paper
 % our contribution to extend n-gram level
-To reduce the size of the vocabulary for each batch, we started up from word alignment method presented in \newcite{shi2017speeding}. This approach is essentially a 1-gram approach. However to increase the coverage of the selected meanings without increasing the size of the mapping model, we first extracted words in the target languages that are spontaneously generated (generally without alignment with the source) - e.g. determiners when translating from English to French. We kept the 100 most frequent such words and call them 0-gram meanings. Then we go trough 1-gram, 2-gram, ..., n-grams. For each source phrase $f_1 ... f_n$, we consider the target phrase as a bag of words, and we check the meanings of the covered $0$, ... $n-1$-grams and discard these meanings from the bag of words. If words remain after examining all of the sub-sequence, we consider these words as new meaning for the current phrase. This approach extends vocabulary mapping to multi-word expressions\footnote{For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams, and 1-gram. However, {\tt once more} translated by {\tt ànouveau} will need 2 additional meanings not covered in 0-gram or 1-gram meanings}.
 
-We have multiple criterion to extract a vocabulary map through the maximal sequence (MS), the maximal frequency of the pair (MF), the maximum number of meaning (KM). The efficiency of a vocabulary map can be evaluated through the coverage of the predicted meanings  for a reference test set (TC), the final translation quality and the average number of meaning per vocab, and the actual time spend in generator layer (Linear and Softmax).
-We present in Table \ref{table:ngram} several vocabulary maps with these different metrics and in Table \ref{table:student} the impact of using such a vocabulary map on the presented systems. Compared to \newcite{shi2017speeding}, our approach with multiple $n-gram$ length enables better match-rate than the 1-gram approach (saturating the coverage TC at 80\%).
+To reduce the size of the vocabulary for each batch, we started up
+from word alignment method presented in
+\newcite{shi2017speeding}. This approach is essentially a 1-gram
+approach. However to increase the coverage of the selected meanings
+without increasing the size of the mapping model, we first extracted
+words in the target languages that are spontaneously generated
+(generally without alignment with the source) - e.g. determiners when
+translating from English to French. We kept the 100 most frequent such
+words and call them 0-gram meanings. Then we go trough 1-gram, 2-gram,
+..., n-grams. For each source phrase $f_1 ... f_n$, we consider the
+target phrase as a bag of words, and we check the meanings of the
+covered $0$, ... $n-1$-grams and discard these meanings from the bag
+of words. If words remain after examining all of the sub-sequence, we
+consider these words as new meaning for the current phrase. This
+approach extends vocabulary mapping to multi-word
+expressions\footnote{For instance {\tt speed test} translated by {\tt
+    test de vitesse} in French is covered by 0-grams, and
+  1-gram. However, {\tt once more} translated by {\tt ànouveau} will
+  need 2 additional meanings not covered in 0-gram or 1-gram
+  meanings}.
+
+We have multiple criterion to extract a vocabulary map through the
+maximal sequence (MS), the maximal frequency of the pair (MF), the
+maximum number of meaning (KM). The efficiency of a vocabulary map can
+be evaluated through the coverage of the predicted meanings for a
+reference test set (TC), the final translation quality and the average
+number of meaning per vocab, and the actual time spend in generator
+layer (Linear and Softmax).  We present in Table \ref{table:ngram}
+several vocabulary maps with these different metrics and in Table
+\ref{table:student} the impact of using such a vocabulary map on the
+presented systems. Compared to \newcite{shi2017speeding}, our approach
+with multiple $n-gram$ length enables better match-rate than the
+1-gram approach (saturating the coverage TC at 80\%).
 
 \begin{table*}[]
 \centering
