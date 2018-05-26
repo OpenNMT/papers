@@ -27,10 +27,12 @@
 \usepackage{pgfplotstable}
 \usepackage{enumitem}
 \usepackage{booktabs}
+\usepackage{caption}
+\captionsetup{font=footnotesize}
 \setlist{itemsep=0pt}
 
-%\aclfinalcopy % Uncomment this line for the final submission
-%\def\aclpaperid{***} %  Enter the acl Paper ID here
+\aclfinalcopy % Uncomment this line for the final submission
+\def\aclpaperid{28} %  Enter the acl Paper ID here
 
 %\setlength\titlebox{5cm}
 % You can expand the titlebox if you need extra space
@@ -40,18 +42,17 @@
 
 \newcommand\BibTeX{B{\sc ib}\TeX}
 
-\title{Fat Encoder, Thin Decoder: \protect\\ OpenNMT System Description for WNMT 2018}
+\title{OpenNMT Fast-CPU System Description for WNMT 2018}
 
-\author{First Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  {\tt email@domain} \\\And
-  Second Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  {\tt email@domain} \\}
+\author{Jean Senellart, Dakun Zhang, Bo Wang,\\{\bf Guillaume Klein, Josep Crego}\\
+  SYSTRAN Research\\
+  Paris \\
+  {\tt first.last@systrangroup.com} \\\And
+  Alexander M. Rush\\
+  School of Engineering \\
+  and Applied Sciences \\
+  Harvard University \\
+  {\tt srush@seas.harvard.edu} \\}
 
 \date{}
 
@@ -59,11 +60,11 @@
 \maketitle
 \begin{abstract}
 
-  We presents a system description of the OpenNMT neural machine
+  We present a system description of the OpenNMT neural machine
   translation (NMT) entry for the WNMT 2018 evaluation. This work
   targets developing a heavily optimized NMT inference system
   targeting a high-performance CPU system. The system uses a
-  combination of four techniques, all of which lead to significant
+  combination of four techniques, all of them lead to significant
   speed-ups in combination: (a) sequence distillation, (b)
   architecture modifications, (c) precomputation, particularly of
   vocabulary, and (d) CPU targeted quantization. This work led to the
@@ -78,11 +79,9 @@ As neural machine translation becomes more widely deployed in
 production environments, it becomes increasingly important to serve
 translations models in as fast and as memory-efficient way possible,
 both on specialized GPU hardware and on standard CPU environments. The
-WNMT 2018 shared task
-\footnote{\url{https://sites.google.com/site/wnmt18/shared-task}}
+WNMT 2018 shared task\footnote{\url{https://sites.google.com/site/wnmt18/shared-task}}
 focused on comparing different systems on both accuracy and
-computational efficiency.
-
+computational efficiency \cite{birch2018wnmt}.
 
 This paper describes the entry for the OpenNMT system to this
 competition.  Our specific interest was to explore the different
@@ -144,7 +143,7 @@ described in Section~3.
 \scalebox{0.9}{
 \includegraphics[width=\linewidth]{pareto.pdf}
 }
-\caption{Pareto on accuracy and throughput.}
+\caption{\small Pareto on accuracy and throughput.}
 \label{fig:pareto}
 \end{figure}
 
@@ -157,8 +156,8 @@ first system {\tt LSTM-opt-2} is a 2-layer LSTM network that is only
 -2.19 BLEU points behind that reference transformer model, but with a
 speed-up of \textcolor{red}{x18}. Our second system achieves 23.11 on
 WNMT 2018 English-German newstest2014 (-4.85 behind the reference
-model) but with an additional decoding speed-up of \textcolor{red}{x108}.
-The final model reaches 1000 words/sec on the evaluation CPU hardware.
+model) but with an additional decoding speed-up of \textcolor{red}{x8}.
+The final model reaches 1000 words/sec on the evaluation CPU hardware and is the fastest CPU model submitted.
 
 % By combining all these techniques, we generate a large number of
 % models and picked two of them presenting interesting trade-off between
@@ -174,7 +173,7 @@ The final model reaches 1000 words/sec on the evaluation CPU hardware.
 We additionally report several new results about recent work in NMT
 and model efficiency: (a) we show that distillation of transformer
 model outperforms training result of a strong RNN model - extending
-findings of \cite{DBLP:journals/corr/CregoS16} who reported that
+findings of \newcite{DBLP:journals/corr/CregoS16} who reported that
 student systems could outperform their teacher for reference RNN-based
 model. (b) we show that distillation from a transformer neural network
 to a simple RNN neural network is efficient, (c) we compare
@@ -196,7 +195,7 @@ Trans.                    & \multicolumn{1}{l}{\(\displaystyle N \)} & \multicol
  Large & 6                     & 512                        & 4096                  & 8                        & 27.96                            & 29.95                            \\
 \bottomrule
 \end{tabular}
-\caption{Evaluation of base and large transformer teacher model on Newstest 2014 and 2015.}
+\caption{\small Evaluation of base and large transformer teacher model on Newstest 2014 and 2015.}
 \label{table:transformer}
 \end{table}
 
@@ -212,7 +211,7 @@ translation\footnote{\url{https://nlp.stanford.edu/projects/nmt/}}. The
 training data contains about 4.5M sentence pairs. We use newstest2013
 as the validation set and newstest2014 and newstest2015 as the testing
 sets. Before training, we trained a 32K joint byte-pair encoding (BPE)
-to preprocess the data \cite{sennrich2015neural}. Hence, the generated
+to preprocess the data \newcite{sennrich2015neural}. Hence, the generated
 subword vocabulary is less than 40K word pieces. We limit the sentence
 length to 100 based on BPE preprocessing in both source and target
 side (excluding only $0.31\%$ of the training corpus). After decoding,
@@ -223,13 +222,13 @@ multi-bleu.perl\footnote{\url{https://github.com/moses-smt/mosesdecoder/blob/mas
 \label{transformer}
 
 For our base teacher model, we train a transformer NMT system
-\cite{vaswani2017attention}.  Unlike standard sequence-to-sequence
+\newcite{vaswani2017attention}.  Unlike standard sequence-to-sequence
 models, the transformer does not use recurrent or convolution
 networks.  It directly models the representations of each sentence
 with self-attention mechanism.  Hence much longer term dependencies
 can be learned, which is especially important for language pairs like
 English-German. It currently achieves state-of-art results for machine
-translation \cite{DBLP:journals/corr/abs-1803-02155} Another advantage
+translation \newcite{DBLP:journals/corr/abs-1803-02155} Another advantage
 for transformer based system is that the MLE training process can be
 parallelized easily across multiple GPUs.
 
@@ -280,8 +279,7 @@ transformer model to student RNN model.
 Our student NMT system follows the standard architecture of
 ~\newcite{luong-pham-manning:2015:EMNLP}. It is implemented as an
 encoder-decoder network with multiple layers of a RNN with Long
-Short-Term Memory hidden \cite{Hochreiter:1997:LSM:1246443.1246450} units and attentional architecture. Full
-details of the
+Short-Term Memory hidden \newcite{Hochreiter:1997:LSM:1246443.1246450} units and attentional architecture. Full details of the
 \textit{OpenNMT}\footnote{\url{https://github.com/OpenNMT/OpenNMT}}
 system are given in \newcite{KleinKDSR17}.
 %Additional details are given in \cite{DBLP:journals/corr/CregoKKRYSABCDE16}.
@@ -307,15 +305,14 @@ system are given in \newcite{KleinKDSR17}.
 
 Profiling of the throughput of our student system, before
 and after further optimizations, is presented in Figure~\ref{fig:decoding_cost}. Here we compare along two splits,
-the components of the system: encoder, decoder, attention, word generation, and beam search; and model components: linear, MM (matrix multiply, primarily in attention), softmax, actiations, and other.
-From this analysis we gather the following
-facts:
+the components of the system: encoder, decoder, attention, word generation, and beam search; and model components: linear, MM (matrix multiply, primarily in attention), softmax, activations, and other.
+From this analysis we gather the following facts:
 
 \begin{itemize}
 \item The most costly part of the inference is the generator, that is the final Linear layer feeding Softmax with weights corresponding to each single vocab of the target language. This is by far the largest matrix multiplication of the system: $(B,W) * (W,V)$ (with $B$ being the batch*beam size, $W$ the width of the network, and $V$ the size of the vocabulary).
 \item Although the cost of the encoder for beam size 1 is higher than the decoder, the decoder cost - including generator and attention model - grows linearly with the beam size.
-\item The most costly operation is the Linear matrix-vector multiplies in the RNNs and generator,
-  contributing more 95\% of the complete processing time
+\item The most costly operation are the Linear matrix-vector multiplies in the RNNs and generator,
+  contributing more 95\% of the complete processing time.
 \end{itemize}
 
 For these observations, it is obvious that we need to optimize the
@@ -327,12 +324,14 @@ we tried different model combination based on a "fat encoder, thin
 decoder" spirit: ie. increasing if necessary the number of operations
 in the encoder part if we can in parallel reduce the number of
 operations in the decoder. Second, we experimented with replacing LSTM
-cell with GRU cells \cite{DBLP:journals/corr/ChoMGBSB14}. Indeed LSTM
+cell with GRU cells \newcite{DBLP:journals/corr/ChoMGBSB14}. Indeed LSTM
 cells have 4 gates while GRU cells only 3, so potentially leading to a
 25\% improvement in speed with similar performance can be
 reached. Note though, that we found GRU requires more care in optimization
 while a naive SGD optimization is generally sufficient for
 LSTM-RNN training.
+
+The same profiling on the submitted system lead to additional findings on which we elaborate in the conclusion.
 
 \section{Inference Optimizations}
 
@@ -363,7 +362,7 @@ usage. All additional optimizations are built on top of this library.
 % our contribution to extend n-gram level
 
 As seen in the last section, the word generation matrix operations
-and softmax require significant time. This time is scales linearly
+and softmax require significant time. This time is scaling linearly
 with the effective target language vocabulary, which starts at 32K.
 
 There has been significant work in reducing this cost. We start with
@@ -374,8 +373,8 @@ the mapping model, we first extract words in the target languages that
 are spontaneously generated (generally without alignment with the
 source) - e.g. determiners when translating from English to French. We
 kept the 100 most frequent such words and call them 0-gram
-meanings. Then we go through unigram, bigram, $ldots$, n-grams
-alignments. For each source phrase $f_1 ... f_n$, we consider the
+meanings. Then we go through unigram, bigram, $\ldots$, n-grams
+alignments. For each source phrase $f_1 \ldots f_n$, we consider the
 target phrase as a bag of words, and we check the meanings of the
 covered $0$, ... $n-1$-grams and keep these as possible targets. If
 words remain after examining all of the sub-sequence, we consider
@@ -383,7 +382,7 @@ these words as new meaning for the current phrase. This approach
 extends vocabulary mapping to multi-word expressions\footnote{For
   instance {\tt speed test} translated by {\tt test de vitesse} in
   French is covered by 0-grams, and 1-gram. However, {\tt once more}
-  translated by {\tt ànouveau} will need 2 additional meanings not
+  translated by {\tt à nouveau} will need the 2 additional meanings {\tt à} and {\tt nouveau} not
   covered in 0-gram or 1-gram meanings}.
 We have multiple criterion to extract a vocabulary map through the
 maximal sequence, the maximal frequency of the pair, the
@@ -399,7 +398,7 @@ with multiple $n-gram$ length enables better match-rate than the
 1-gram approach (saturating the coverage TC at 80\%).
 
 \begin{table*}[]
-\centering
+\small\centering
 \begin{tabular}{ccccccccc}
 \toprule
 \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Max \\Sequence\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Max \\Freq\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\# \\Meaning\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}vocab\\ per token\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Test\\Coverage\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Linear\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}SoftMax\\Time {[}s{]}\end{tabular}} & \multirow{2}{*}{File Size} & \multirow{2}{*}{BLEU} \\
@@ -415,7 +414,7 @@ with multiple $n-gram$ length enables better match-rate than the
 3 & 1 & 50 & 30 & 90\% & 5.23 & 0.15 & 1127M & 23.16 \\
 \bottomrule
 \end{tabular}
-\caption{Evaluations of n-gram vocabulary mappings on newstest2014.}
+\caption{\small Evaluations of n-gram vocabulary mappings on newstest2014.}
 \label{table:ngram}
 \end{table*}
 
@@ -427,7 +426,7 @@ matrix-operations.  To speed these up, we use 16-bit signed integer
 quantization method proposed in \newcite{DBLP:journals/corr/Devlin17}.
 To better optimize speed on the AWS M5 instance used in the
 competition, which supports AVX512 SIMD instructions, we extend the
-approach to AVX2 and AVX512. Switching from SSE4 to AVX2, then from
+approach to AVX2 and AVX512 instruction set. Switching from SSE4 to AVX2, then from
 AVX2 to AVX512 instructions set gave additional speed boost of
 respectively $+12\%$ and $+6\%$.
 
@@ -436,7 +435,7 @@ We explored several other methods which largely resulted in
 negative results.
 
 \paragraph{Decrease the sentence length:}
-For BPE preprocessing, we try using 64K merges which can generate much shorter sentences.
+For BPE preprocessing, we try using 64K merges which can generate shorter sentences.
 The average sentence length for 32K BPE is about 29.1 and for 64K BPE, it is about 27.7 tokens. Assuming the same efficiency in the vocabulary mapping, increasing the size of the vocabulary could therefore have gain about 5\% additional speed-up just by the reduction of the sentence length. However, the tradeoff here was not clearly a win.
 
  \paragraph{8-bit quantization:}
@@ -461,7 +460,7 @@ LSTM & b-LSTM                         & 1024                         & 2        
 GRU & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\
 \bottomrule
 \end{tabular}
-\caption{Configurations for the two student systems}
+\caption{\small Configurations for the two student systems}
 \label{table:config}
 \end{table*}
 
@@ -478,7 +477,7 @@ GRU          & Y                                                                
 GRU          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\
 GRU-opt          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \bottomrule
 \end{tabular}
-\caption{Evaluations on two student systems (the suffix "-opt" means it is the final submission)}
+\caption{\small Evaluations on two student systems (the suffix "-opt" means it is the final submission)}
 \label{table:student}
 \end{table*}
 
@@ -486,7 +485,7 @@ GRU-opt          & Y                                                            
 
 \begin{figure}
 \includegraphics[width=\linewidth]{beambatch.png}
-\caption{Evaluations on different beam size and batch size}
+\caption{\small Evaluations on different beam size and batch size}
 \label{fig:beam_batch_bleu}
 \end{figure}
 
@@ -523,9 +522,7 @@ While for beam size 3, 4 and 5, there is no significant difference in
 accuracy which is consistent with previous findings on distilled
 system.  Interestingly, for a fixed beam size, we notice also a slight
 improvement of accuracy when increasing the batch size. This is a
-side-effect of the dynamic vocabulary mapping per batch. This shows
-that some additional optimizations could be obtained on vocabulary
-mapping selection taking batching into account.
+side-effect of the dynamic vocabulary mapping per batch.
 
 %\input{beam_batch_newstest2014.tex}
 These experiments also show that the decoding cost increases with
@@ -546,15 +543,13 @@ We did not invest effort into reduce image size during the preparation
 of the submission. Our fastest system has a docker image of 200M for
 effective 72Mb size for the model and less than 15Mb for additional
 code and resources. Post-submission, we looked at reducing this 100Mb
-overhead coming from operating system and found that easy
-optimizations could be applied - for instance like remove useless
-dependencies like Python. Without huge effort - we managed to reduced
+overhead coming from operating system and misc tools. Without huge effort - we managed to reduced
 this overhead to 70Mb, and it is probably easy to reduce even further.
 
 \subsection{Other Considerations}
 
 We  note that at this level of optimization, especially the use
-of quantization, makes the speed measurement very dependent on other
+of quantization, the speed measurement is very dependent on other
 processes running on the same instance, especially due to the critical
 importance of the L3/L4-cache shared between the different cores. In
 particular, we observed that 4 parallel process using fastest model
@@ -567,13 +562,9 @@ parallel decoding to avoid waste of memory cache transfer.
 
 % docker size => -50M
 This work presents the OpenNMT submission to the 2018 Shared Task of
-WNMT focusing on efficient and NMT. We show that training with
-distillation using an optimized ``fat encoder, thin decoder'' RNN
-sequence-to-sequence system we can produce a very efficient CPU based
-model. The models additionally uses quantization leading to both a
-size reduction and a speed gain. Several further optimizations
-could be applied, such as full graph quantization, augmentation
-of vocabulary size, more improvement on vocabulary mapping. Our final system though does show a significant increase in speed of \textcolor{red}{todo}...
+WNMT. We show that training with distillation using an optimized RNN
+sequence-to-sequence system we can produce a very competitive 
+model for CPU demonstrating again the powerful effect of the distillation process and for the first time cross-class. Most of the additional presented optimizations can apply for other architecture. Our final system does show a significant increase in speed of \textcolor{red}{XXX} over the baseline and demonstrate a throughput of 1000 word/s on a single core which is the fastest reported so far...
 
 
 %\section*{Acknowledgments}
