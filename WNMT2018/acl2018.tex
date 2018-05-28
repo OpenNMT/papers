@@ -211,24 +211,24 @@ translation\footnote{\url{https://nlp.stanford.edu/projects/nmt/}}. The
 training data contains about 4.5M sentence pairs. We use newstest2013
 as the validation set and newstest2014 and newstest2015 as the testing
 sets. Before training, we trained a 32K joint byte-pair encoding (BPE)
-to preprocess the data \newcite{sennrich2015neural}. Hence, the generated
+to preprocess the data \cite{sennrich2015neural}. Hence, the generated
 subword vocabulary is less than 40K word pieces. We limit the sentence
 length to 100 based on BPE preprocessing in both source and target
 side (excluding only $0.31\%$ of the training corpus). After decoding,
 we remove the BPE joiners and evaluate the tokenized output with
-multi-bleu.perl\footnote{\url{https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl}}.
+multi-bleu.perl \cite{koehn2007moses}.
 
 \subsection{Teacher Model: Transformer}
 \label{transformer}
 
 For our base teacher model, we train a transformer NMT system
-\newcite{vaswani2017attention}.  Unlike standard sequence-to-sequence
+\cite{vaswani2017attention}.  Unlike standard sequence-to-sequence
 models, the transformer does not use recurrent or convolution
 networks.  It directly models the representations of each sentence
 with self-attention mechanism.  Hence much longer term dependencies
 can be learned, which is especially important for language pairs like
 English-German. It currently achieves state-of-art results for machine
-translation \newcite{DBLP:journals/corr/abs-1803-02155} Another advantage
+translation \cite{DBLP:journals/corr/abs-1803-02155}. Another advantage
 for transformer based system is that the MLE training process can be
 parallelized easily across multiple GPUs.
 
@@ -279,7 +279,7 @@ transformer model to student RNN model.
 Our student NMT system follows the standard architecture of
 ~\newcite{luong-pham-manning:2015:EMNLP}. It is implemented as an
 encoder-decoder network with multiple layers of a RNN with Long
-Short-Term Memory hidden \newcite{Hochreiter:1997:LSM:1246443.1246450} units and attentional architecture. Full details of the
+Short-Term Memory hidden \cite{Hochreiter:1997:LSM:1246443.1246450} units and attentional architecture. Full details of the
 \textit{OpenNMT}\footnote{\url{https://github.com/OpenNMT/OpenNMT}}
 system are given in \newcite{KleinKDSR17}.
 %Additional details are given in \cite{DBLP:journals/corr/CregoKKRYSABCDE16}.
@@ -320,11 +320,11 @@ efficiency of linear matrix-vector operation, reduce the amount
 required, and have a special focus on the generation layer.
 
 These observations led us to several further model experiments.  First
-we tried different model combination based on a "fat encoder, thin
-decoder" spirit: ie. increasing if necessary the number of operations
+we tried different model combination based on a ``fat encoder, thin
+decoder'' spirit: ie. increasing if necessary the number of operations
 in the encoder part if we can in parallel reduce the number of
 operations in the decoder. Second, we experimented with replacing LSTM
-cell with GRU cells \newcite{DBLP:journals/corr/ChoMGBSB14}. Indeed LSTM
+cell with GRU cells \cite{DBLP:journals/corr/ChoMGBSB14}. Indeed LSTM
 cells have 4 gates while GRU cells only 3, so potentially leading to a
 25\% improvement in speed with similar performance can be
 reached. Note though, that we found GRU requires more care in optimization
@@ -382,7 +382,7 @@ these words as new meaning for the current phrase. This approach
 extends vocabulary mapping to multi-word expressions\footnote{For
   instance {\tt speed test} translated by {\tt test de vitesse} in
   French is covered by 0-grams, and 1-gram. However, {\tt once more}
-  translated by {\tt Ã  nouveau} will need the 2 additional meanings {\tt Ã } and {\tt nouveau} not
+  translated by {\tt \`{A}  nouveau} will need the 2 additional meanings {\tt \`{A} } and {\tt nouveau} not
   covered in 0-gram or 1-gram meanings}.
 We have multiple criterion to extract a vocabulary map through the
 maximal sequence, the maximal frequency of the pair, the
@@ -563,7 +563,7 @@ parallel decoding to avoid waste of memory cache transfer.
 % docker size => -50M
 This work presents the OpenNMT submission to the 2018 Shared Task of
 WNMT. We show that training with distillation using an optimized RNN
-sequence-to-sequence system we can produce a very competitive 
+sequence-to-sequence system we can produce a very competitive
 model for CPU demonstrating again the powerful effect of the distillation process and for the first time cross-class. Most of the additional presented optimizations can apply for other architecture. Our final system does show a significant increase in speed of \textcolor{red}{XXX} over the baseline and demonstrate a throughput of 1000 word/s on a single core which is the fastest reported so far...
 
 
