@@ -458,12 +458,12 @@ To reduce further the system size, we also considered use of {\tt gemmlowp}\foot
 \centering
 \begin{tabular}{cll}
 \hline
-\multirow{2}{*}{Transformer (Tf.)}   & Base          & N=6, d=512, d\_ff=2048, h=8                    \\ \cline{2-3}
-                               & Large         & N=6, d=512, d\_ff=4096, h=8                    \\ \hline
+\multirow{2}{*}{Transformer (Tf.)}   & Base          & N=6, d=512, \(\displaystyle d_{ff}\)=2048, h=8                    \\ \cline{2-3}
+                               & Large         & N=6, d=512, \(\displaystyle d_{ff}\)=4096, h=8                    \\ \hline
 \multirow{2}{*}{direct RNN}     & Large & b-LSTM, 4 layers*1024, embed=512, optim=sgd    \\ \cline{2-3}
                                & Small & b-LSTM, 2 layers*1024, embed=512, optim=sgd    \\ \hline
 \multirow{2}{*}{distilled RNN} & Small          & b-LSTM, 2 layers*1024, embed=512, optim=sgd    \\ \cline{2-3}
-                               & Tiny           & GRU, enc: 2, dec:1 *512, embed=256, optim=adam \\ \hline
+                               & Tiny           & GRU, enc:2, dec:1 *512, embed=256, optim=adam \\ \hline
 \end{tabular}
 \caption{\small Configurations for the NMT systems}
 \label{table:config}
@@ -527,7 +527,7 @@ To reduce further the system size, we also considered use of {\tt gemmlowp}\foot
 
 After tuning, we settled on two optimal NMT systems based on the
 distilled training data. Table \ref{table:config}
-lists the different configurations for these two systems:
+lists the different configurations for these systems:
 
 \begin{itemize}
 \item {\tt distill-small-opt}, uses a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
