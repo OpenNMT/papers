@@ -42,7 +42,7 @@
 
 \newcommand\BibTeX{B{\sc ib}\TeX}
 
-\title{OpenNMT Fast-CPU System Description for WNMT 2018}
+\title{OpenNMT System Description for WNMT 2018 \protect\\ 1000 words/sec on a single CPU}
 
 \author{Jean Senellart, Dakun Zhang, Bo Wang,\\{\bf Guillaume Klein, Josep Crego}\\
   SYSTRAN Research\\
@@ -155,10 +155,10 @@ we highlight two models which were submitted to the shared task: Our
 first system {\tt distill-small-opt} is a 2-layer LSTM network that is only
 -2.19 BLEU points behind that reference transformer model, but with a
 speed-up of \textcolor{red}{x18} on
-WNMT 2018 English-German newstest2014. 
+WNMT 2018 English-German newstest2014.
 Our second system {\tt distill-tiny-opt} achieves 23.11 on the same testset (-4.85 behind the reference
 model) but with an additional decoding speed-up of \textcolor{red}{x6}.
-The final model reaches 1000 words/sec on the evaluation CPU hardware and is the fastest CPU model submitted.
+The final model reaches 1000 words/sec on the evaluation CPU hardware and is the fastest CPU model submitted. \textcolor{red}{To our knowledge, the current fastest system reported on CPU is only 100 words/sec \cite{DBLP:journals/corr/Devlin17}.}
 
 % By combining all these techniques, we generate a large number of
 % models and picked two of them presenting interesting trade-off between
@@ -221,29 +221,31 @@ multi-bleu.perl \cite{koehn2007moses}.
 \subsection{Teacher Model: Transformer}
 \label{transformer}
 
-For our base teacher model, we train a transformer NMT system
-\cite{vaswani2017attention}.  Unlike standard sequence-to-sequence
-models, the transformer does not use recurrent or convolution
-networks.  It directly models the representations of each sentence
-with self-attention mechanism.  Hence much longer term dependencies
+Transformer networks \cite{vaswani2017attention} are the current state-of-the art in many machine translation tasks \cite{DBLP:journals/corr/abs-1803-02155}.
+%For our base teacher model, we train a transformer NMT system \cite{vaswani2017attention}.
+%Unlike standard sequence-to-sequence models, transformer does not use recurrent or convolution networks.
+The network directly models the representations of each sentence
+with a self-attention mechanism.  Hence much longer term dependencies
 can be learned, which is especially important for language pairs like
-English-German. It currently achieves state-of-art results for machine
-translation \cite{DBLP:journals/corr/abs-1803-02155}. Another advantage
-for transformer based system is that the MLE training process can be
-parallelized easily across multiple GPUs.
+English-German.
+%It currently achieves state-of-art results for machine translation \cite{DBLP:journals/corr/abs-1803-02155}.
+In addition, transformer allows to easily parallelise the MLE training process across multiple GPUs.
+However, a large number of parameters are needed by the network to obtain its best performance.
+In order to reduce the model size, we applied knowledge distillation, a technique that has proven successful for reducing the size of neural models. We considered the transformer network as our teacher network.
 
-Due to their current effectiveness, it would be tempting to use the
-transformer architecture directly for our final system (and other
-submissions took this approach). However we decided not to use this
-strategy. For one transformer networks still require a large number of
-parameters and also large memory to achieve the best
-performance. Additionally some of the training benefits of transformer
-are less apparent in auto-regressive inference.
-
+%Due to their current effectiveness, it would be tempting to use the
+%transformer architecture directly for our final system (and other
+%submissions took this approach). However we decided not to use this
+%strategy. For one transformer networks still require a large number of
+%parameters and also large memory to achieve the best
+%performance. Additionally some of the training benefits of transformer
+%are less apparent in auto-regressive inference.
 As a result, the parallelizable training, the flexibility in modeling
 both long-range/local dependencies, and the state-of-the-art
 performance make this architecture suitable to act as our teacher
-system. We used
+system.
+
+We used
 \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}}
 to train two transformer based systems: base and large described in
 Table \ref{table:config} with their evaluation in Table \ref{table:eval}. For both, the
@@ -298,8 +300,8 @@ system are given in \newcite{KleinKDSR17}.
 \scalebox{0.85}{
 \includegraphics[width=\linewidth]{decoder_linear.pdf}
 }
-\caption{\small Profiling of the throughput during inference on newstest2014. 
-%Each line is a different system. 
+\caption{\small Profiling of the throughput during inference on newstest2014.
+%Each line is a different system.
 The {\tt small-1,2,5 (LSTM)} are distilled systems with respective beam size of 1, 2, 5. {\tt tiny-opt-2 (GRU)} and {\tt small-opt-2 (LSTM)} are the final systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
 \label{fig:decoding_cost}
 \end{figure}
