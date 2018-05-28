@@ -183,21 +183,20 @@ Finally, we also report several other negative experiments that
 result in  systems inside of the pareto convex border. For instance, we
 compare using 8-bit quantization to 16-bit quantization.
 
-
-\begin{table}[]
-\centering
-\begin{tabular}{lccccrr}
-\toprule
-Trans.                    & \multicolumn{1}{l}{\(\displaystyle N \)} & \multicolumn{1}{l}{\(\displaystyle d \)} & \multicolumn{1}{l}{\(\displaystyle d_{ff} \)} & \multicolumn{1}{l}{\(\displaystyle h \)} & \multicolumn{1}{l}{N2014} & \multicolumn{1}{l}{N2015} \\
-
-\midrule
- Base  & 6                     & 512                        & 2048                  & 8                        & 27.30                            & 29.36                            \\
- Large & 6                     & 512                        & 4096                  & 8                        & 27.96                            & 29.95                            \\
-\bottomrule
-\end{tabular}
-\caption{\small Evaluation of base and large transformer teacher model on Newstest 2014 and 2015.}
-\label{table:transformer}
-\end{table}
+%\begin{table}[]
+%\centering
+%\begin{tabular}{lccccrr}
+%\toprule
+%Trans.                    & \multicolumn{1}{l}{\(\displaystyle N \)} & \multicolumn{1}{l}{\(\displaystyle d \)} & \multicolumn{1}{l}{\(\displaystyle d_{ff} \)} & \multicolumn{1}{l}{\(\displaystyle h \)} & \multicolumn{1}{l}{N2014} & \multicolumn{1}{l}{N2015} \\
+%
+%\midrule
+% Base  & 6                     & 512                        & 2048                  & 8                        & 27.30                            & 29.36                            \\
+% Large & 6                     & 512                        & 4096                  & 8                        & 27.96                            & 29.95                            \\
+%\bottomrule
+%\end{tabular}
+%\caption{\small Evaluation of base and large transformer teacher model on Newstest 2014 and 2015.}
+%\label{table:transformer}
+%\end{table}
 
 \section{Training and Distillation}
 
@@ -246,7 +245,7 @@ performance make this architecture suitable to act as our teacher
 system. We used
 \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}}
 to train two transformer based systems: base and large described in
-Table \ref{table:transformer} with their evaluation. For both, the
+Table \ref{table:config} with their evaluation. For both, the
 learning rate is set to 2.0 and warmup steps 8000, we average the last
 8 checkpoints to get the final model. Our baseline system outperforms
 the provided baseline Sockeye model by +0.37 BLEU on newstest 2014.
@@ -452,18 +451,34 @@ To reduce further the system size, we also considered use of {\tt gemmlowp}\foot
 % narrower rnn 768 did not reach same level
 % BPE increase - addiotnal potential gain - diff of target sentence length
 % \end{itemize}
+
 \begin{table*}[]
 \centering
-\begin{tabular}{lcccccc}
-\toprule
-     & \multicolumn{1}{l}{RNN type} & \multicolumn{1}{l}{RNN size} & \multicolumn{1}{l}{encoder layers} & \multicolumn{1}{l}{decoder layers} & \multicolumn{1}{l}{embedding size} & \multicolumn{1}{l}{optim} \\ \midrule
-LSTM & b-LSTM                         & 1024                         & 2                                  & 2                                  & 512                                & sgd                       \\
-GRU & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\
-\bottomrule
+\begin{tabular}{cll}
+\hline
+\multirow{2}{*}{Transformer}   & Base          & N=6, d=512, d\_ff=2048, h=8                    \\ \cline{2-3}
+                               & Large         & N=6, d=512, d\_ff=4096, h=8                    \\ \hline
+\multirow{2}{*}{basic RNN}     & LSTM\_4\_1024 & b-LSTM, 4 layers*1024, embed=512, optim=sgd    \\ \cline{2-3}
+                               & LSTM\_2\_1024 & b-LSTM, 2 layers*1024, embed=512, optim=sgd    \\ \hline
+\multirow{2}{*}{distilled RNN} & LSTM          & b-LSTM, 2 layers*1024, embed=512, optim=sgd    \\ \cline{2-3}
+                               & GRU           & GRU, enc: 2, dec:1 *512, embed=256, optim=adam \\ \hline
 \end{tabular}
 \caption{\small Configurations for the two student systems}
 \label{table:config}
 \end{table*}
+
+%\begin{table*}[]
+%\centering
+%\begin{tabular}{lcccccc}
+%\toprule
+%     & \multicolumn{1}{l}{RNN type} & \multicolumn{1}{l}{RNN size} & \multicolumn{1}{l}{encoder layers} & \multicolumn{1}{l}{decoder layers} & \multicolumn{1}{l}{embedding size} & \multicolumn{1}{l}{optim} \\ \midrule
+%LSTM & b-LSTM                         & 1024                         & 2                                  & 2                                  & 512                                & sgd                       \\
+%GRU & GRU                          & 512                          & 2                                  & 1                                  & 256                                & adam                      \\
+%\bottomrule
+%\end{tabular}
+%\caption{\small Configurations for the two student systems}
+%\label{table:config}
+%\end{table*}
 
 \begin{table*}[]
 \centering
