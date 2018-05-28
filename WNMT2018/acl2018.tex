@@ -483,19 +483,38 @@ To reduce further the system size, we also considered use of {\tt gemmlowp}\foot
 \begin{table*}[]
 \centering
 \begin{tabular}{lcccccccc}
-\toprule
+\hline
 \multirow{2}{*}{} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ runtime\end{tabular}} & \multirow{2}{*}{vmap} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ model\end{tabular}} & \multicolumn{2}{c}{newstest2014} & \multicolumn{2}{c}{newstest2015} & \multirow{2}{*}{model size} \\ \cline{5-8}
-                  &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \midrule
-LSTM & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\
-LSTM-opt & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\
-GRU          & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\
-GRU          & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\
-GRU          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\
-GRU-opt          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \bottomrule
+                  &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \hline
+LSTM\_4\_1024     & -                                                                           & -                     & -                                                                         &                      & 24.56     &                      & 27.24     & 618M                        \\ \hline
+LSTM\_2\_1024     & -                                                                           & -                     & -                                                                         &                      & 23.78     &                      & 26.37     & 416M                        \\ \hline
+LSTM              & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\ \hline
+LSTM-opt          & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\ \hline
+GRU               & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\ \hline
+GRU               & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\ \hline
+GRU               & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\ \hline
+GRU-opt           & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \hline
 \end{tabular}
 \caption{\small Evaluations on two student systems (the suffix "-opt" means it is the final submission)}
 \label{table:student}
 \end{table*}
+
+%\begin{table*}[]
+%\centering
+%\begin{tabular}{lcccccccc}
+%\toprule
+%\multirow{2}{*}{} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ runtime\end{tabular}} & \multirow{2}{*}{vmap} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ model\end{tabular}} & \multicolumn{2}{c}{newstest2014} & \multicolumn{2}{c}{newstest2015} & \multirow{2}{*}{model size} \\ \cline{5-8}
+%                  &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \midrule
+%LSTM & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\
+%LSTM-opt & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\
+%GRU          & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\
+%GRU          & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\
+%GRU          & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\
+%GRU-opt          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \bottomrule
+%\end{tabular}
+%\caption{\small Evaluations on two student systems (the suffix "-opt" means it is the final submission)}
+%\label{table:student}
+%\end{table*}
 
 \section{Results}
 
