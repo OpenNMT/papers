@@ -221,31 +221,29 @@ multi-bleu.perl \cite{koehn2007moses}.
 \subsection{Teacher Model: Transformer}
 \label{transformer}
 
-Transformer networks \cite{vaswani2017attention} are the current state-of-the art in many machine translation tasks \cite{DBLP:journals/corr/abs-1803-02155}.
-%For our base teacher model, we train a transformer NMT system \cite{vaswani2017attention}.
-%Unlike standard sequence-to-sequence models, transformer does not use recurrent or convolution networks.
-The network directly models the representations of each sentence
-with a self-attention mechanism.  Hence much longer term dependencies
+For our base teacher model, we train a transformer NMT system
+\cite{vaswani2017attention}.  Unlike standard sequence-to-sequence
+models, the transformer does not use recurrent or convolution
+networks.  It directly models the representations of each sentence
+with self-attention mechanism.  Hence much longer term dependencies
 can be learned, which is especially important for language pairs like
-English-German.
-%It currently achieves state-of-art results for machine translation \cite{DBLP:journals/corr/abs-1803-02155}.
-In addition, transformer allows to easily parallelise the MLE training process across multiple GPUs.
-However, a large number of parameters are needed by the network to obtain its best performance.
-In order to reduce the model size, we applied knowledge distillation, a technique that has proven successful for reducing the size of neural models. We considered the transformer network as our teacher network.
+English-German. It currently achieves state-of-art results for machine
+translation \cite{DBLP:journals/corr/abs-1803-02155}. Another advantage
+for transformer based system is that the MLE training process can be
+parallelized easily across multiple GPUs.
 
-%Due to their current effectiveness, it would be tempting to use the
-%transformer architecture directly for our final system (and other
-%submissions took this approach). However we decided not to use this
-%strategy. For one transformer networks still require a large number of
-%parameters and also large memory to achieve the best
-%performance. Additionally some of the training benefits of transformer
-%are less apparent in auto-regressive inference.
+Due to their current effectiveness, it would be tempting to use the
+transformer architecture directly for our final system (and other
+submissions took this approach). However we decided not to use this
+strategy. For one transformer networks still require a large number of
+parameters and also large memory to achieve the best
+performance. Additionally some of the training benefits of transformer
+are less apparent in auto-regressive inference.
+
 As a result, the parallelizable training, the flexibility in modeling
 both long-range/local dependencies, and the state-of-the-art
 performance make this architecture suitable to act as our teacher
-system.
-
-We used
+system. We used
 \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}}
 to train two transformer based systems: base and large described in
 Table \ref{table:config} with their evaluation in Table \ref{table:eval}. For both, the
@@ -608,7 +606,7 @@ parallel decoding to avoid waste of memory cache transfer.
 This work presents the OpenNMT submission to the 2018 Shared Task of
 WNMT. We show that training with distillation using an optimized RNN
 sequence-to-sequence system we can produce a very competitive
-model for CPU demonstrating again the powerful effect of the distillation process and for the first time cross-class. Most of the additional presented optimizations can apply for other architecture. Our final system does show a significant increase in speed of \textcolor{red}{XXX} over the baseline and demonstrate a throughput of 1000 word/s on a single core which is the fastest reported so far...
+model for CPU demonstrating again the powerful effect of the distillation process and for the first time cross-class. Most of the additional presented optimizations can apply for other architecture. Our final system does show a significant increase in speed of \textcolor{red}{x113} over the baseline and demonstrate a throughput of 1000 word/s on a single core which is the fastest reported so far...
 
 
 %\section*{Acknowledgments}
