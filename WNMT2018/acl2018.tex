@@ -24,6 +24,7 @@
 \usepackage{pgfplots}
 \usepackage{array,ragged2e}
 \usepackage{textcomp}
+\usepackage{amssymb}
 \usepackage{pgfplotstable}
 \usepackage{enumitem}
 \usepackage{booktabs}
@@ -67,9 +68,8 @@
   combination of four techniques, all of them lead to significant
   speed-ups in combination: (a) sequence distillation, (b)
   architecture modifications, (c) precomputation, particularly of
-  vocabulary, and (d) CPU targeted quantization. This work led to the
-  development of new features that have been integrated to OpenNMT and
-  already available to the community.
+  vocabulary, and (d) CPU targeted quantization. This work achieves the fastest performance of the shared task, and led to development of new features that have been integrated to OpenNMT and
+  available to the community.
 
 \end{abstract}
 
@@ -85,9 +85,8 @@ computational efficiency \cite{birch2018wnmt}.
 
 This paper describes the entry for the OpenNMT system to this
 competition.  Our specific interest was to explore the different
-techniques for training and optimizing CPU models with high throughput
-while maintaining high accuracy, although allowing for a small
-decrease below the state-of-the-art. While we did not put real focus
+techniques for training and optimizing CPU models for very high throughput
+while preserving highest possible accuracy compared to state-of-the-art. While we did not put real focus
 on memory and docker size footprint, we applied basic optimization
 techniques to reduce the final size of our models.
 
@@ -143,7 +142,7 @@ described in Section~3.
 \scalebox{0.9}{
 \includegraphics[width=\linewidth]{pareto.pdf}
 }
-\caption{\small Pareto on accuracy and throughput.}
+\caption{Pareto on accuracy and throughput. The different models on the plot are described in the paper, the corresponding BLEU score calculated on {\it newstest2014}, and throughput in word per second measured on non dedicated M5 instances.}
 \label{fig:pareto}
 \end{figure}
 
@@ -152,12 +151,12 @@ accuracy. A meta question of this work is to decide which models
 represent interesting and useful points on the Pareto curve. The main
 results are described in Figure~\ref{fig:pareto}.  From these results
 we highlight two models which were submitted to the shared task: Our
-first system {\tt LSTM-opt-2} is a 2-layer LSTM network that is only
+first system {\tt distill-small-opt} is a 2-layer LSTM network that is only
 -2.19 BLEU points behind that reference transformer model, but with a
-speed-up of \textcolor{red}{x18}. Our second system achieves 23.11 on
-WNMT 2018 English-German newstest2014 (-4.85 behind the reference
-model) but with an additional decoding speed-up of \textcolor{red}{x8}.
-The final model reaches 1000 words/sec on the evaluation CPU hardware and is the fastest CPU model submitted.
+speed-up of {x18}. Our second system achieves 23.11 on
+WNMT 2018 English-German {\it newstest2014} (-4.85 behind the reference
+model) but with an additional decoding speed-up of {x8}.
+The final model reaches 1000 words/sec on the dedicated evaluation CPU hardware and is the fastest CPU model submitted.
 
 % By combining all these techniques, we generate a large number of
 % models and picked two of them presenting interesting trade-off between
@@ -174,13 +173,13 @@ We additionally report several new results about recent work in NMT
 and model efficiency: (a) we show that distillation of transformer
 model outperforms training result of a strong RNN model - extending
 findings of \newcite{DBLP:journals/corr/CregoS16} who reported that
-student systems could outperform their teacher for reference RNN-based
+student models could outperform their teacher for reference RNN-based
 model. (b) we show that distillation from a transformer neural network
 to a simple RNN neural network is efficient, (c) we compare
 quantitatively different quantizations, and (b) we give an improved
 algorithm to dynamically select  target vocabulary for a given batch.
-Finally, we also report several other negative experiments that
-result in  systems inside of the pareto convex border. For instance, we
+Finally, we also report several complementary experiments that
+resulted in  systems inside of the pareto convex border. For instance, we
 compare using 8-bit quantization to 16-bit quantization.
 
 %\begin{table}[]
@@ -207,8 +206,8 @@ Following the shared task setup, we use the data set provided by WNMT
 2018, which is a preprocessed and tokenized version of WMT 2014 on
 English-German
 translation\footnote{\url{https://nlp.stanford.edu/projects/nmt/}}. The
-training data contains about 4.5M sentence pairs. We use newstest2013
-as the validation set and newstest2014 and newstest2015 as the testing
+training data contains about 4.5M sentence pairs. We use {\it newstest2013}
+as the validation set and {\it newstest2014} and {\it newstest2015} as the testing
 sets. Before training, we trained a 32K joint byte-pair encoding (BPE)
 to preprocess the data \cite{sennrich2015neural}. Hence, the generated
 subword vocabulary is less than 40K word pieces. We limit the sentence
@@ -247,10 +246,10 @@ In order to reduce the model size, we applied knowledge distillation, a techniqu
 
 We used \textit{OpenNMT-tf}\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}}
 to train two transformer based systems: base and large described in
-Table \ref{table:config} with their evaluation. For both, the
+table \ref{table:config} with their evaluation in table \ref{table:score}. For both, the
 learning rate is set to 2.0 and warmup steps 8000, we average the last
 8 checkpoints to get the final model. Our baseline system outperforms
-the provided baseline Sockeye model by +0.37 BLEU on newstest 2014.
+the provided baseline Sockeye model by +0.37 BLEU on {\it newstest2014}.
 
 \subsection{Distillation to RNN}
 \label{distill}
@@ -299,7 +298,7 @@ system are given in \newcite{KleinKDSR17}.
 \scalebox{0.85}{
 \includegraphics[width=\linewidth]{decoder_linear.pdf}
 }
-\caption{\small Profiling of the throughput during inference on newstest2014. Each line is a different system. The {\tt LSTM-1,2,5} are baseline systems with respective beam size of 1, 2, 5. {\tt GRU-opt-2} and {\tt LSTM-opt-2} are the final systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
+\caption{\small Profiling of the throughput during inference on newstest2014. Each line is a different system. The {\tt LSTM-1,2,5} are baseline systems with respective beam size of 1, 2, 5. {\tt distill-tiny-opt} and {\tt distill-small-opt} are the final systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
 \label{fig:decoding_cost}
 \end{figure}
 
@@ -367,14 +366,14 @@ As seen in the last section, the word generation matrix operations and softmax r
 There has been significant work in reducing this cost. We start with the word alignment method, presented in \newcite{shi2017speeding}, which uses alignments computed on the training corpus and for each sentence, it selects target words aligned to each source word. Hence building a reduced vocabulary of target words to be used when translating a source sentence.
 
 
-To increase the coverage of the selected meanings without increasing the size of the mapping model, we first extract words in the target language that are unaligned - e.g. determiners when translating from English to French. We kept the 100 most frequent such words and call them $0$-gram meanings. Then we go through unigram, bigram, $\ldots$, $n$-gram sequences of words in the source sentence. For each source sequence, we consider its $N$-best translation hypotheses . All target words present in such $N$-best hypotheses are kept in the target vocabulary. To account for translation hypotheses we use a phrase table extracted from word alignments.
+To increase the coverage of the selected meanings without increasing the size of the mapping model, we first extract words in the target language that are unaligned - e.g. determiners when translating from English to French. We kept the 100 most frequent such words and call them $0$-gram meanings. Then we go through $1$-gram, $2$-gram, $\ldots$, $n$-gram sequences of words in the source sentence. For each source sequence, we consider its $N$-best translation hypotheses. All target words present in such $N$-best hypotheses are kept in the target vocabulary. To account for translation hypotheses we use a phrase table extracted from word alignments.
 
-The method extends single word vocabulary mappings to multi-word expressions\footnote{For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams, and 1-grams. However, {\tt once more} translated by {\tt \`{A}  nouveau} will need the 2 additional meanings {\tt \`{A} } and {\tt nouveau} that are only covered when using $2$-gram meanings.}.  We have multiple criterion to extract a vocabulary map: the maximal sequence size $n$, the maximum number $N$ of translation hypotheses, the minimum frequency of a phrase pair. The efficiency of a vocabulary map can be evaluated through the coverage of the predicted meanings for a reference test set, the final translation quality and the average number of meaning per vocab, and the actual time spent in generator layer (Linear and Softmax).
+The method extends single word vocabulary mappings to multi-word expressions\footnote{For instance {\tt speed test} translated by {\tt test de vitesse} in French is covered by 0-grams {\tt $\varnothing\rightarrow$de}, and 1-grams {\tt speed$\rightarrow$vitesse}, {\tt test$\rightarrow$test}. However, {\tt once more} translated by {\tt \`a nouveau} will need the 2 additional meanings {\tt \`{a}Â } and {\tt nouveau} that are only covered when using $2$-gram meanings.}.  We have multiple criterion to extract a vocabulary map: the maximal sequence size $n$, the maximum number $N$ of translation hypotheses, the minimum frequency of a phrase pair. The efficiency of a vocabulary map can be evaluated through the coverage of the predicted meanings for a reference test set, the final translation quality and the average number of meaning per vocab, and the actual time spent in generator layer (Linear and Softmax).
 
 Table \ref{table:ngram} compares several vocabulary maps with these
 different metrics. Compared to \newcite{shi2017speeding}, our approach
-with multiple $n-gram$ length enables better match-rate than the
-1-gram approach (saturating the Test Coverage at 80\%).
+with multiple $n$-gram length phrase enables better match-rate than the
+$1$-gram approach (saturating the Test Coverage (TC) at 80\%).
 
 \begin{table*}[]
 \small\centering
@@ -411,7 +410,7 @@ respectively $+12\%$ and $+6\%$.
 
 \subsection{Other Results}
 We explored several other methods which largely resulted in
-negative results.
+negative results but could be interesting for other contexts.
 
 \paragraph{Decrease the sentence length:}
 For BPE preprocessing, we try using 64K merges which can generate shorter sentences.
@@ -433,17 +432,17 @@ To reduce further the system size, we also considered use of {\tt gemmlowp}\foot
 % \end{itemize}
 
 \begin{table*}[]
-\centering
+\centering\small
 \begin{tabular}{cll}
 \hline
-\multirow{2}{*}{Transformer}   & Base          & N=6, d=512, d\_ff=2048, h=8                    \\ \cline{2-3}
-                               & Large         & N=6, d=512, d\_ff=4096, h=8                    \\ \hline
+\multirow{2}{*}{Transformer}   & Large          & N=6, d=512, d\_ff=4096, h=8                    \\ \cline{2-3}
+                               & Large         & N=6, d=512, d\_ff=2048, h=8                    \\ \hline
 \multirow{2}{*}{direct RNN}     & Large & b-LSTM, 4 layers*1024, embed=512, optim=sgd    \\ \cline{2-3}
                                & Small & b-LSTM, 2 layers*1024, embed=512, optim=sgd    \\ \hline
 \multirow{2}{*}{distilled RNN} & Small          & b-LSTM, 2 layers*1024, embed=512, optim=sgd    \\ \cline{2-3}
                                & Tiny           & GRU, enc: 2, dec:1 *512, embed=256, optim=adam \\ \hline
 \end{tabular}
-\caption{\small Configurations for the two student systems}
+\caption{\small Configurations for the different systems presented in the paper}
 \label{table:config}
 \end{table*}
 
@@ -461,26 +460,27 @@ To reduce further the system size, we also considered use of {\tt gemmlowp}\foot
 %\end{table*}
 
 \begin{table*}[]
-\centering
+\centering\small
 \begin{tabular}{clcccccccc}
 \hline
-\multicolumn{2}{c}{\multirow{2}{*}{}}    & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ runtime\end{tabular}} & \multirow{2}{*}{vmap} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ model\end{tabular}} & \multicolumn{2}{c}{newstest2014} & \multicolumn{2}{c}{newstest2015} & \multirow{2}{*}{model size} \\ \cline{6-9}
+\multicolumn{2}{c}{\multirow{2}{*}{}}    & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ runtime\end{tabular}} & \multirow{2}{*}{vmap} & \multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}quantize\\ model\end{tabular}} & \multicolumn{2}{c}{\it newstest2014} & \multicolumn{2}{c}{\it newstest2015} & \multirow{2}{*}{model size} \\ \cline{6-9}
 \multicolumn{2}{c}{}                     &                                                                             &                       &                                                                           & cpu time {[}s{]}     & BLEU      & cpu time {[}s{]}     & BLEU      &                             \\ \hline
-\multirow{2}{*}{Trans.} & Base      & -                                                                           & -                     & -                                                                         & 10795.16
-                     & 27.30     &          7511.08            & 29.36     &    1.2G                         \\
+\multirow{2}{*}{Transformer} 
                              & Large     & -                                                                           & -                     & -                                                                         &   11279.97
-                   & 27.96     &           8339.10           & 29.95     &    1.4G                         \\ \hline
-\multirow{2}{*}{direct}      & Large     & -                                                                           & -                     & -                                                                         &                   2859.57   & 24.56     &      2073.90                & 27.24     & 618M                        \\
+                   & 27.96     &           8339.10           & 29.95     &    1.4G                         \\ 
+& Base      & -                                                                           & -                     & -                                                                         & 10795.16
+                     & 27.30     &          7511.08            & 29.36     &    1.2G                         \\ \hline
+\multirow{2}{*}{direct RNN}      & Large     & -                                                                           & -                     & -                                                                         &                   2859.57   & 24.56     &      2073.90                & 27.24     & 618M                        \\
                              & Small     & -                                                                           & -                     & -                                                                         &     1713.54                 & 23.78     &1313.39                      & 26.37     & 416M                        \\ \hline
-\multirow{6}{*}{distilled}   & Small     & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\
-                             & Samll-opt & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\
+\multirow{6}{*}{distilled RNN}   & Small     & -                                                                           & -                     & -                                                                         & 1694.16              & 25.96     & 1300.24              & 28.62     & 416M                        \\
+                             & Small-opt & Y                                                                           & Y                     & Y                                                                         & 621.17               & 25.77     & 478.08               & 28.60     & 207M                        \\
                              & Tiny      & -                                                                           & -                     & -                                                                         & 506.67               & 23.24     & 384.76               & 26.09     & 141M                        \\
                              & Tiny      & Y                                                                           & -                     & -                                                                         & 286.89               & 23.24     & 219.85               & 26.03     & 141M                        \\
                              & Tiny      & Y                                                                           & Y                     & -                                                                         & 105.80               & 23.18     & 77.10                & 25.95     & 141M                        \\
                              & Tiny-opt  & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \hline
 \end{tabular}
 \caption{\small Evaluations on two student systems (the suffix "-opt" means it is the final submission)}
-\label{table:student}
+\label{table:score}
 \end{table*}
 
 %\begin{table*}[]
@@ -497,7 +497,7 @@ To reduce further the system size, we also considered use of {\tt gemmlowp}\foot
 %GRU-opt          & Y                                                                           & Y                     & Y                                                                         & 99.81                & 23.11     & 77.76                & 25.75     & 72M                         \\ \bottomrule
 %\end{tabular}
 %\caption{\small Evaluations on two student systems (the suffix "-opt" means it is the final submission)}
-%\label{table:student}
+%\label{table:score}
 %\end{table*}
 
 \section{Results}
@@ -513,28 +513,28 @@ distilled training data. Table \ref{table:config}
 lists the different configurations for these two systems:
 
 \begin{itemize}
-\item {\tt LSTM-opt-2}, uses a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
+\item {\tt distill-small}, uses a bidirectional RNN with 2 LSTM layers with each hidden layer having 1024 nodes.
 We use a word embedding size of 512 and set the dropout to 0.3.
 The batch size is set to 64 and the default learning rate is 1.0 with sgd optimization.
-\item {\tt GRU-opt-2}, uses  a smaller network, with GRU layers, 512 hidden size.
+\item {\tt distill-tiny}, uses  a smaller network, with GRU layers, 512 hidden size.
 On the encoder side, we have 2 layers, while on the decoder side, only 1 layer is set.
 We use Adam optimization with the starting learning rate 0.0002.
 \end{itemize}
 Both systems are trained up to 10 epochs.
 
-Table \ref{table:student} shows our internal evaluations.
-For system {\tt LSTM-opt-2}, the CPU time during decoding improves from 1694.16 seconds to 621.17 seconds (saving 63.3\%), with a loss of only 0.19 BLEU score, on newstest2014.
-For system {\tt GRU-opt-2}, the trends are similar.
+Table \ref{table:score} shows our internal evaluations.
+For system {\tt distill-small-opt}, the CPU time during decoding improves from 1694.16 seconds to 621.17 seconds (saving 63.3\%), with a loss of only 0.19 BLEU score, on newstest2014.
+For system {\tt distill-tiny-opt}, the trends are similar.
 80.3\% cpu time is saving, while only 0.13 BLEU score is lost.
 
-We also compare the influence of quantization hyperparameters, e.g. vmap and quantize model, on system {\tt GRU-opt-2}.
+We also compare the influence of quantization hyperparameters, e.g. vmap and quantize model, on tiny distilled RNN ({\tt distill-tiny}).
 Quantize runtime and vmap both can save the decoding time about 50\%.
 The quantized model also halves the model size.
 
 \subsection{Beam size and Batch size}
 
 We further test the impact on the decoding performance (BLEU) and CPU
-time of different beam size and batch size on system {\tt GRU-opt-2}.
+time of different beam size and batch size on system {\tt distill-tiny-opt}.
 Figure \ref{fig:beam_batch_bleu} shows for a fixed batch size, when we
 increase the beam size from 1 to 3, the accuracy increases as well.
 While for beam size 3, 4 and 5, there is no significant difference in
@@ -556,26 +556,36 @@ computation cost.
 
 %\input{beam_batch_newstest2014_cputime.tex}
 
-\subsection{Image Size}
+\subsection{Docker Image Size}
 
 We did not invest effort into reduce image size during the preparation
 of the submission. Our fastest system has a docker image of 200M for
-effective 72Mb size for the model and less than 15Mb for additional
-code and resources. Post-submission, we looked at reducing this 100Mb
+an effective 72Mb size for the model and less than 15Mb for additional
+code and resources. Post-submission, we looked at reducing this 110Mb
 overhead coming from operating system and misc tools. Without huge effort - we managed to reduced
 this overhead to 70Mb, and it is probably easy to reduce even further.
 
-\subsection{Other Considerations}
+\subsection{Other Engineering Considerations}
 
 We  note that at this level of optimization, especially the use
-of quantization, the speed measurement is very dependent on other
+of quantization, the speed measurement is very dependent on low level
+memory management mechanisms\footnote{This effect was actually observed 
+during the preparation of the system: a same test could benchmark with a fluctuation
+of about 10-15\% depending on the time of the day, and probable load of the 
+shared server hosting the virtual instance}, and therefore on other
 processes running on the same instance, especially due to the critical
 importance of the L3/L4-cache shared between the different cores. In
-particular, we observed that 4 parallel process using fastest model
+particular, we observed that 4 parallel processes using fastest model
 were only reaching a x3 speed boost. To go further on parallel
-decoding, one would need to implement synchronization points between
-parallel decoding to avoid waste of memory cache transfer.
+decoding, one would need to implement different ad-hoc mechanisms such as:
+\begin{itemize}
+\item synchronization points between
+the parallel decoders to avoid waste of memory cache transfer
+\item grouping of the sentences by sentence-length to optimize CPU 
+usage on the different cores
+\end{itemize}
 
+All the optimizations performed for that submission were focussed on the Linear layers - on the final fastest submitted system, the profile of figure \ref{fig:decoding_cost} shows emerging room for optimization: even though the Linear share remains preponderant, some potential additional gain (between 5 and 10\%) could be achieved by focusing on the other operators.
 
 \section{Conclusion}
 
@@ -583,8 +593,13 @@ parallel decoding to avoid waste of memory cache transfer.
 This work presents the OpenNMT submission to the 2018 Shared Task of
 WNMT. We show that training with distillation using an optimized RNN
 sequence-to-sequence system we can produce a very competitive
-model for CPU demonstrating again the powerful effect of the distillation process and for the first time cross-class. Most of the additional presented optimizations can apply for other architecture. Our final system does show a significant increase in speed of \textcolor{red}{110x} over the baseline and demonstrate a throughput of 1000 word/s on a single core which is the fastest reported so far...
+model for CPU demonstrating again the powerful effect of the distillation process and for the first time its application cross-class (Transformer$\rightarrow$RNN). This positive result implies that text simplification through distillation could be applied to more contexts.
 
+Even though our submission was dedicated to a specific RNN-based network, most of the presented optimizations, aiming by different means to reduce and optimize the matrix multiplication operations can apply for other types of architectures.
+
+Our final system does show an impressive increase in speed of 110x compared to the baseline system and achieves a throughput of 1000 word/s on a single core which is the fastest reported so far.
+
+\newpage
 
 %\section*{Acknowledgments}
 %
