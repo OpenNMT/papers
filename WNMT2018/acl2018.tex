@@ -43,9 +43,9 @@
 
 \newcommand\BibTeX{B{\sc ib}\TeX}
 
-\title{OpenNMT System Description for WNMT 2018 \protect\\ 1000 words/sec on a single CPU}
+\title{OpenNMT System Description for WNMT 2018 \protect\\ 800 words/sec on a single CPU}
 
-\author{Jean Senellart, Dakun Zhang, Bo Wang,\\{\bf Guillaume Klein, Josep Crego}\\
+\author{Jean Senellart, Dakun Zhang, Bo Wang,\\{\bf Guillaume Klein, J.P. Ramatchandirin, Josep Crego}\\
   SYSTRAN Research\\
   Paris \\
   {\tt first.last@systrangroup.com} \\\And
@@ -155,7 +155,7 @@ first system {\tt distill-small-opt} is a 2-layer LSTM network that is only
 speed-up of {x18}. Our second system achieves 23.11 on
 WNMT 2018 English-German {\it newstest2014} (-4.85 behind the reference
 model) but with an additional decoding speed-up of {x8}.
-The final model reaches 1000 words/sec on the dedicated evaluation CPU hardware and is the fastest CPU model submitted.
+The final model reaches 800 words/sec on the dedicated evaluation CPU hardware and is the fastest CPU model submitted.
 
 % By combining all these techniques, we generate a large number of
 % models and picked two of them presenting interesting trade-off between
@@ -165,7 +165,7 @@ The final model reaches 1000 words/sec on the dedicated evaluation CPU hardware 
 % model, with a speed-up of \textcolor{red}{x18}. Our second system
 % achieves 23.11 on WNMT 2018 English-German newstest2014 (-4.85 behind
 % the reference model) but with an additional decoding speed-up of
-% \textcolor{red}{x6} at about 1000 words/sec on the evaluation
+% \textcolor{red}{x6} at about 800 words/sec on the evaluation
 % hardware.
 
 We additionally report several new results about recent work in NMT
@@ -596,7 +596,7 @@ model for CPU demonstrating again the powerful effect of the distillation proces
 
 Even though our submission was dedicated to a specific RNN-based network, most of the presented optimizations, aiming by different means to reduce and optimize the matrix multiplication operations can apply for other types of architectures.
 
-Our final system does show an impressive increase in speed of 110x compared to the baseline system and achieves a throughput of 1000 word/s on a single core which is the fastest reported so far.
+Our final system does show an impressive increase in speed of 110x compared to the baseline system and achieves a throughput of 800 word/s on a single core which is the fastest reported so far.
 
 \newpage
 
