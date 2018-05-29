@@ -62,8 +62,7 @@
 \begin{abstract}
 
   We present a system description of the OpenNMT neural machine translation (NMT) entry for the WNMT 2018 evaluation.
-  This work
-  targets developing a heavily optimized NMT inference system
+  In this work, we developed a heavily optimized NMT inference model
   targeting a high-performance CPU system. The system uses a
   combination of four techniques, all of them lead to significant
   speed-ups in combination: (a) sequence distillation, (b)
@@ -76,9 +75,9 @@
 \section{Introduction}
 
 As neural machine translation becomes more widely deployed in
-production environments, it becomes increasingly important to serve
+production environments, it becomes also increasingly important to serve
 translations models in as fast and as memory-efficient way possible,
-both on specialized GPU hardware and on standard CPU environments. The
+both on dedicated GPU and on standard CPU hardwares. The
 WNMT 2018 shared task\footnote{\url{https://sites.google.com/site/wnmt18/shared-task}}
 focused on comparing different systems on both accuracy and
 computational efficiency \cite{birch2018wnmt}.
@@ -270,7 +269,7 @@ models and reduce their size, but can also improve the translation
 quality if the width of the network is not reduced too much. Also,
 these distilled systems have the interesting feature that they
 performed almost identically when reducing beam search size $K$ from
-$K=5$ to $K=2$. Seemingly the smaller model learns from ``smoother''
+$K=5$ to $K=2$. Seemingly the smaller model learns from more consistent
 translations and can produce effective results with simpler syntactic
 structure and even word choices. One major question here was to find
 out whether cross-class distillation works as well, here from an
@@ -408,7 +407,7 @@ approach to AVX2 and AVX512 instruction set. Switching from SSE4 to AVX2, then f
 AVX2 to AVX512 instructions set gave additional speed boost of
 respectively $+12\%$ and $+6\%$.
 
-\subsection{Other Results}
+\subsection{Other Experiments}
 We explored several other methods which largely resulted in
 negative results but could be interesting for other contexts.
 
