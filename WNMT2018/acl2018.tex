@@ -43,11 +43,10 @@
 
 \newcommand\BibTeX{B{\sc ib}\TeX}
 
-\title{OpenNMT System Description for WNMT 2018 \protect\\ 800 words/sec on a single CPU}
+\title{OpenNMT System Description for WNMT 2018: \protect\\ 800 words/sec on a single CPU}
 
-\author{Jean Senellart, Dakun Zhang, Bo Wang,\\{\bf Guillaume Klein, J.P. Ramatchandirin, Josep Crego}\\
-  SYSTRAN Research\\
-  Paris \\
+\author{Jean Senellart, Dakun Zhang, \\{\bf Bo Wang, Guillaume Klein,} \\{\bf J.P. Ramatchandirin, Josep Crego}\\
+  SYSTRAN Research, Paris\\
   {\tt first.last@systrangroup.com} \\\And
   Alexander M. Rush\\
   School of Engineering \\
@@ -61,9 +60,9 @@
 \maketitle
 \begin{abstract}
 
-  We present a system description of the OpenNMT neural machine translation (NMT) entry for the WNMT 2018 evaluation.
+  We present a system description of the OpenNMT Neural Machine Translation entry for the WNMT 2018 evaluation.
   In this work, we developed a heavily optimized NMT inference model
-  targeting a high-performance CPU system. The system uses a
+  targeting a high-performance CPU system. The final system uses a
   combination of four techniques, all of them lead to significant
   speed-ups in combination: (a) sequence distillation, (b)
   architecture modifications, (c) precomputation, particularly of
@@ -141,7 +140,7 @@ described in Section~3.
 \scalebox{0.9}{
 \includegraphics[width=\linewidth]{pareto.pdf}
 }
-\caption{Pareto on accuracy and throughput. The different models on the plot are described in the paper, the corresponding BLEU score calculated on {\it newstest2014}, and throughput in word per second measured on non dedicated M5 instances.}
+\caption{Pareto on accuracy and throughput. The different models on the plot are described in the paper, the corresponding BLEU score calculated on {\it newstest2014}, and throughput in word per second measured on {\underline {non dedicated}} M5 instances.}
 \label{fig:pareto}
 \end{figure}
 
@@ -155,7 +154,7 @@ first system {\tt distill-small-opt} is a 2-layer LSTM network that is only
 speed-up of {x18}. Our second system achieves 23.11 on
 WNMT 2018 English-German {\it newstest2014} (-4.85 behind the reference
 model) but with an additional decoding speed-up of {x8}.
-The final model reaches 800 words/sec on the dedicated evaluation CPU hardware and is the fastest CPU model submitted.
+The final model reaches 800 words/sec on the dedicated evaluation CPU hardware and is the fastest CPU model submitted\footnote{On non dedicated hardware, our best benchmark shows 621 words/sec, see section \ref{other} for analysis of the difference.}.
 
 % By combining all these techniques, we generate a large number of
 % models and picked two of them presenting interesting trade-off between
@@ -170,12 +169,11 @@ The final model reaches 800 words/sec on the dedicated evaluation CPU hardware a
 
 We additionally report several new results about recent work in NMT
 and model efficiency: (a) we show that distillation of transformer
-model outperforms training result of a strong RNN model - extending
+model to a simple RNN outperforms direct training of a strong RNN model - extending
 findings of \newcite{DBLP:journals/corr/CregoS16} who reported that
 student models could outperform their teacher for reference RNN-based
-model. (b) we show that distillation from a transformer neural network
-to a simple RNN neural network is efficient, (c) we compare
-quantitatively different quantizations, and (b) we give an improved
+model. (b) We compare
+quantitatively different quantizations, and (c) we give an improved
 algorithm to dynamically select  target vocabulary for a given batch.
 Finally, we also report several complementary experiments that
 resulted in  systems inside of the pareto convex border. For instance, we
@@ -205,11 +203,10 @@ Following the shared task setup, we use the data set provided by WNMT
 2018, which is a preprocessed and tokenized version of WMT 2014 on
 English-German
 translation\footnote{\url{https://nlp.stanford.edu/projects/nmt/}}. The
-training data contains about 4.5M sentence pairs. We use {\it newstest2013}
+training data contains about 4.5M sentence pairs. We use {\it news\-test2013}
 as the validation set and {\it newstest2014} and {\it newstest2015} as the testing
 sets. Before training, we trained a 32K joint byte-pair encoding (BPE)
-to preprocess the data \cite{sennrich2015neural}. Hence, the generated
-subword vocabulary is less than 40K word pieces. We limit the sentence
+to preprocess the data \cite{sennrich2015neural} (actual vocabulary size of 34K). We limit the sentence
 length to 100 based on BPE preprocessing in both source and target
 side (excluding only $0.31\%$ of the training corpus). After decoding,
 we remove the BPE joiners and evaluate the tokenized output with
@@ -266,7 +263,7 @@ sequence-to-sequence models similar to \newcite{bahdanau2014neural}
 Results from \newcite{DBLP:journals/corr/CregoS16} show that the
 distillation process not only improves throughput of the student
 models and reduce their size, but can also improve the translation
-quality if the width of the network is not reduced too much. Also,
+quality. Also,
 these distilled systems have the interesting feature that they
 performed almost identically when reducing beam search size $K$ from
 $K=5$ to $K=2$. Seemingly the smaller model learns from more consistent
@@ -274,13 +271,12 @@ translations and can produce effective results with simpler syntactic
 structure and even word choices. One major question here was to find
 out whether cross-class distillation works as well, here from an
 transformer model to student RNN model.
-
-Our student NMT system follows the standard architecture of
+Remarkably, Figure \ref{table:score} shows that distilled simple RNN system outperforms the direct strong RNN model\footnote{Both NMT systems follow the standard architecture of
 ~\newcite{luong-pham-manning:2015:EMNLP}. It is implemented as an
 encoder-decoder network with multiple layers of a RNN with Long
 Short-Term Memory hidden \cite{Hochreiter:1997:LSM:1246443.1246450} units and attentional architecture. Full details of the
-\textit{OpenNMT}\footnote{\url{https://github.com/OpenNMT/OpenNMT}}
-system are given in \newcite{KleinKDSR17}.
+\textit{OpenNMT}
+system are given in \newcite{KleinKDSR17}.} by a significant +1.4 BLEU score.
 %Additional details are given in \cite{DBLP:journals/corr/CregoKKRYSABCDE16}.
 
 % We proved it was the case, since the best distilled system
@@ -291,13 +287,14 @@ system are given in \newcite{KleinKDSR17}.
 
 
 \begin{figure}
+\centering
 \scalebox{0.85}{
 \includegraphics[width=\linewidth]{decoder.pdf}
 }
 \scalebox{0.85}{
 \includegraphics[width=\linewidth]{decoder_linear.pdf}
 }
-\caption{\small Profiling of the throughput during inference on {\it newstest2014}. Each line is a different system. The {\tt small-1,2,5} are distilled systems with respective beam size of 1, 2, 5. {\tt distill-tiny-opt} and {\tt distill-small-opt} are the final systems. The total decoding time for each of these systems (in seconds) are from top to bottom: 60, 464, 754, 662 and 629. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
+\caption{\small Profiling of the throughput during inference on {\it newstest2014}. Each line is a different system. The {\tt small-1,2,5} are distilled systems with respective beam size of 1, 2, 5. {\tt distill-tiny-opt} and {\tt distill-small-opt} are the final systems. The decoding time for each of these systems range from 90 to 1800 seconds. The top table show the distribution of time per component of the network, while the bottom table show the distribution of time for network operators.}
 \label{fig:decoding_cost}
 \end{figure}
 
@@ -314,8 +311,8 @@ From this analysis we gather the following facts:
   contributing more 95\% of the complete processing time.
 \end{itemize}
 
-For these observations, it is obvious that we need to optimize the
-efficiency of linear matrix-vector operation, reduce the amount
+From these facts, it is obvious that we need to optimize the
+efficiency of linear matrix-vector operation, reduce the amount of such operations
 required, and have a special focus on the generation layer.
 
 These observations led us to several further model experiments.  First
@@ -345,8 +342,8 @@ LSTM-RNN training.
 
 \subsection{Implementation: CTranslate}
 
-We begin with a custom RNN decoder.  CTranslate is the open-source
-inference engine for OpenNMT models (designed for Lua Torch).  The
+CTranslate is the open-source
+inference engine for OpenNMT models (initially designed for Lua Torch).  The
 code is implemented in raw C++ with minimal dependencies using the
 popular Eigen linear algebra library. CTranslate's goal is to offer a
 lightweight and embeddable solution for executing models. It benefits
@@ -360,7 +357,7 @@ usage. All additional optimizations are built on top of this library.
 % find reference paper
 % our contribution to extend n-gram level
 
-As seen in the last section, the word generation matrix operations and softmax require significant time. This time is scaling linearly with the effective target language vocabulary, which starts at 40K.
+As seen in the last section, the word generation matrix operations and softmax require significant time. This time is scaling linearly with the effective target language vocabulary, which starts at 34K.
 
 There has been significant work in reducing this cost. We start with the word alignment method, presented in \newcite{shi2017speeding}, which uses alignments computed on the training corpus and for each sentence, it selects target words aligned to each source word. Hence building a reduced vocabulary of target words to be used when translating a source sentence.
 
@@ -565,12 +562,13 @@ overhead coming from operating system and misc tools. Without huge effort - we m
 this overhead to 70Mb, and it is probably easy to reduce even further.
 
 \subsection{Other Engineering Considerations}
+\label{other}
 
 We  note that at this level of optimization, especially the use
 of quantization, the speed measurement is very dependent on low level
 memory management mechanisms\footnote{This effect was actually observed
 during the preparation of the system: a same test could benchmark with a fluctuation
-of about 10-15\% depending on the time of the day, and probable load of the
+of up to 25\% depending on the time of the day, and probable load of the
 shared server hosting the virtual instance.}, and therefore on other
 processes running on the same instance, especially due to the critical
 importance of the L3/L4-cache shared between the different cores. In
@@ -584,7 +582,7 @@ the parallel decoders to avoid waste of memory cache transfer
 usage on the different cores
 \end{itemize}
 
-All the optimizations performed for that submission were focussed on the Linear layers - on the final fastest submitted system, the profile of Figure \ref{fig:decoding_cost} shows emerging room for optimization: even though the Linear share remains preponderant, some potential additional gain (between 5 and 10\%) could be achieved by focusing on the other operators.
+All the optimizations performed for that submission were focussed on the Linear layers - on the final fastest submitted system, the profile of Figure \ref{fig:decoding_cost} shows emerging opportunities for optimization: even though the Linear share remains preponderant, some potential additional gain (between 5 and 10\%) could be achieved by focusing on other operators (MM and non-linear).
 
 \section{Conclusion}
 
@@ -596,7 +594,7 @@ model for CPU demonstrating again the powerful effect of the distillation proces
 
 Even though our submission was dedicated to a specific RNN-based network, most of the presented optimizations, aiming by different means to reduce and optimize the matrix multiplication operations can apply for other types of architectures.
 
-Our final system does show an impressive increase in speed of 110x compared to the baseline system and achieves a throughput of 800 word/s on a single core which is the fastest reported so far.
+Our final system does show an impressive increase in speed of 110x compared to the baseline system and achieves a throughput of 800 word/sec on a single core which is the fastest reported so far.
 
 \newpage
 
