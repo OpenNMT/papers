@@ -2,30 +2,30 @@ This repository contains tools for building and evaluating vocabulary maps used 
 
 # File format
 
-A vocabulary map file is a list of mapping "source ngram > target meanings". Each line represents such mapping with the format:
+A vocabulary map file is a list of mapping "source ngram > target words". Each line represents such mapping with the format:
 
 ```
-source ngram\tmeaning1 meaning2 meaning3...
+source ngram\tw_1 w_2 w_3...
 ```
 
-A source ngram can be empty (0-gram).
+A source ngram can be empty (0-gram). 
+
+Since we are only interested to predict the vocabulary of a full sentence, the words associated to a specific ngram are not necessarily corresponding to the actual translation, but all the new words that are necessary to build meaning of the ngram.
 
 # Vocabulary calculation
 
 Given a sentence `S = m_1 ... m_k`, the target vocabulary `Tvoc` is calculated as followed:
 
 ```
-Tvoc.insert(meanings[''])
+Tvoc.insert(vmap[''])
 
 for i = 1, k do
   for p = 1, k-i+1 do
   	seq = concat(m_p, ' ', ..., m_{p+i-1})
-  	Tvoc.insert(meanings[seq])
+  	Tvoc.insert(vmap[seq])
   end
  end
 ```
-
-where `meanings` is a map string>list of string.
 
 # Building a vmap
 
