@@ -14,9 +14,8 @@ fastalign(){
     dir=/root/workspace/$base.${ss}2${tt}
     mkdir -p $dir
     paste $base.$ss $base.$tt | perl -pe 's/\t/ \|\|\| /' > $dir/data.${ss}-${tt}
-    $fast/fast_align -i $dir/data.${ss}-${tt} -d -o -v    > $dir/data.${ss}-${tt}.forward 2> $dir/data.${ss}-${tt}.forward.log &
-    $fast/fast_align -i $dir/data.${ss}-${tt} -d -o -v -r > $dir/data.${ss}-${tt}.reverse 2> $dir/data.${ss}-${tt}.reverse.log &
-    wait
+    $fast/fast_align -i $dir/data.${ss}-${tt} -d -o -v    > $dir/data.${ss}-${tt}.forward 2> $dir/data.${ss}-${tt}.forward.log
+    $fast/fast_align -i $dir/data.${ss}-${tt} -d -o -v -r > $dir/data.${ss}-${tt}.reverse 2> $dir/data.${ss}-${tt}.reverse.log
     echo "$fast/atools -i $dir/data.${ss}-${tt}.forward -j $dir/data.${ss}-${tt}.reverse -c grow-diag-final-and > $dir/${base}.${ss}2${tt}.gdfa"
     $fast/atools -i $dir/data.${ss}-${tt}.forward -j $dir/data.${ss}-${tt}.reverse -c grow-diag-final-and > $dir/${base}.${ss}2${tt}.gdfa    
 }
