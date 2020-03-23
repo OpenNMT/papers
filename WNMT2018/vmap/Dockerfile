@@ -29,5 +29,7 @@ WORKDIR /root/fast_align
 RUN mkdir build ; cd build ; cmake .. ; make
 
 COPY buildPT.sh /root
+COPY paste.py /root
+COPY filter.py /root
 
 ENTRYPOINT ["/root/buildPT.sh"]
