@@ -1,6 +1,6 @@
 #!/bin/bash
 
-fast=/root/fast_align/build/
+fast=/root/fast_align/build
 trainPT=/root/mosesdecoder/scripts/training/train-model.perl
 
 fastalign(){

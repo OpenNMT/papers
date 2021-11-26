@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from collections import Counter
 import argparse
 import gzip
@@ -11,9 +13,9 @@ parser.add_argument('-zg', '--zero_generate_list',
                     help="list of terms generated from 0")
 parser.add_argument('-ms', '--max_size', default=3, type=int,
                     help="maximal size of source sequences")
-parser.add_argument('-mf', '--min_freq', default=3, type=int,
+parser.add_argument('-mf', '--min_freq', default=2, type=int,
                     help="minimal frequency of pair")
-parser.add_argument('-km', '--keep_meaning', default=10, type=int,
+parser.add_argument('-km', '--keep_meaning', default=20, type=int,
                     help="number of meaning to keep per entry")
 parser.add_argument('-tv', '--tgt_vocab',
                     help="save target vocabulary for max coverage calculation")
@@ -23,10 +25,11 @@ parser.add_argument('-l', '--limit', type=int,
 args = parser.parse_args()
 
 zero_gen = set()
-with open(args.zero_generate_list, "rb") as f:
-    for line in f:
-        line = line.strip()
-        zero_gen.add(line)
+if args.zero_generate_list:
+    with open(args.zero_generate_list) as f:
+        for line in f:
+            line = line.strip()
+            zero_gen.add(line)
 
 mapping = dict()
 # collect all entries by size
@@ -34,11 +37,14 @@ mapping = dict()
 tvocab = set()
 
 if os.path.isfile(args.phrase_table + ".gz"):
-    f = gzip.open(args.phrase_table + ".gz", 'rb')
-elif not os.path.isfile(args.phrase_table):
-    raise RuntimeError('%s is not a file' % args.phrase_table)
+    args.phrase_table += ".gz"
+if os.path.isfile(args.phrase_table):
+    if args.phrase_table.endswith(".gz"):
+        f = gzip.open(args.phrase_table, "rt")
+    else:
+        f = open(args.phrase_table)
 else:
-    f = open(args.phrase_table, 'rb')
+    raise RuntimeError('%s is not a file' % args.phrase_table)
 
 count = 0
 for line in f:
@@ -59,10 +65,10 @@ for line in f:
     if args.limit and count > args.limit:
         break
 
-sys.stderr.write('%d number of lines\n' % count)
+f.close()
 
 if args.tgt_vocab:
-    with open(args.tgt_vocab, "wb") as fw:
+    with open(args.tgt_vocab, "w") as fw:
         for v in tvocab:
             fw.write("%s\n" % v)
 
@@ -95,7 +101,7 @@ def keep_meaning(mean, vocabs):
             keep.add(m)
     return keep
 
-print "\t"+" ".join(zero_gen)
+print("\t"+" ".join(zero_gen))
 
 # collect frequent meaning - for checking zero_gen list completion
 freq_mean = Counter()
@@ -115,7 +121,7 @@ for l in range(1, args.max_size+1):
             keep = keep.union(keep_meaning(mean, vocabs))
         if len(keep) > 0:
             mapping[l][m] = list(keep)
-            print m+"\t"+" ".join(keep)
+            print(m+"\t"+" ".join(keep))
         else:
             del_key.append(m)
     for m in del_key:
@@ -124,4 +130,4 @@ for l in range(1, args.max_size+1):
 freq_means = freq_mean.most_common(20)
 
 for v in freq_means:
-    sys.stderr.write("fm\t%s\t%s\n" % (v[0], v[1]))
+    sys.stderr.write("%s\n" % v[0])

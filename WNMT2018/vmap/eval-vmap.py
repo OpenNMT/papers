@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import argparse
 import os
 import sys
@@ -17,7 +19,7 @@ args = parser.parse_args()
 mapping = dict()
 lmax = -1
 e_count = 0
-with open(args.vmap, 'rb') as f:
+with open(args.vmap) as f:
     for l in f:
         e_count += 1
         (src,tgt) = l.split('\t')
@@ -37,13 +39,13 @@ sys.stderr.write("read mapping - %d entries (max length %d)\n" % (e_count, lmax)
 
 tvocab = set()
 if args.tv:
-    with open(args.tv, "rb") as f:
+    with open(args.tv) as f:
         for v in f:
             tvocab.add(v.strip())
         sys.stderr.write("target vocabulary %d\n" % len(tvocab))
 
-fsrc = open(args.src, 'rb')
-ftgt = open(args.tgt, 'rb')
+fsrc = open(args.src)
+ftgt = open(args.tgt)
 
 count = 0
 c_total = 0
@@ -84,4 +86,4 @@ if args.tv:
     sys.stderr.write("oracle misses %d/%d (%.2f%%)\n" % (c_miss_tvocab, c_total, int(c_miss_tvocab*10000./c_total)/100))
 sys.stderr.write("#vocab/sentences %.2f\n" % (int(svocab*10.0/count)/10))
 for v in misses:
-    print v, misses[v]
+    print(v, misses[v])
